@@ -1,0 +1,40 @@
+version: qwen-mvp-v1
+source:
+  stream_gemma_root: ../stream-gemma
+  stream_gemma_observed_commit: 34a771e52e11fa3d339d216762db79485fd684a8
+model:
+  name: Qwen/Qwen3.5-35B-A3B
+  revision: 59d61f3ce65a6d9863b86d2e96597125219dc754
+  adapter: ../stream-gemma/outputs/lora-qwen-w1-long-neg
+  adapter_sha256: eb11e600de59edf48ef2d71bb632ae5944c0474441f264bb3ce6ceae8bb71da9
+  dtype: bfloat16
+  attention: sdpa
+  experts_implementation: grouped_mm
+streaming:
+  protocol: v24
+  target_fps: 1
+  window_frames: 32
+  frame_resolution: 384
+  frame_num_tokens: 144
+  memory_mode: last-response
+  memory_instruction_version: v2
+  memory_k: 1
+  memory_select: aged-out
+  qwen_prefix_mode: direct
+projection:
+  hidden_width: 1536
+  depth: 3
+  output_dim: 512
+  activation: gelu
+  layer_norm: true
+  residual: false
+  logit_scale_init: 2.659260036932778
+actions_config: actions_v1.yaml
+labels:
+  stream_gemma_to_paper:
+    Silence: Silence
+    Standby: Hold
+    Response: Response
+reproducibility:
+  seed: 42
+  record_source_dirty_state: true

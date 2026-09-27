@@ -1,0 +1,7 @@
+pace-clm
+Copyright 2026 pace-clm contributors
+
+This project integrates with and adapts interfaces from Stream-Gemma.
+CLM-style projection concepts are based on Contrastive-LM/CLM, which is
+licensed under Apache-2.0: https://github.com/Contrastive-LM/CLM
+

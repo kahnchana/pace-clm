@@ -1,0 +1,6 @@
+version: actions-v1
+actions:
+  Response: "There is sufficient new visual evidence to answer the user's request now."
+  Silence: "There is no relevant visual evidence that warrants a response now."
+  Hold: "Relevant evidence is present, but no new response should be made because it would repeat an ongoing or previous response."
+

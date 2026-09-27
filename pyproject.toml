@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pace-clm"
+version = "0.1.0"
+description = "CLM-style state/action heads for the frozen PACE-Qwen streaming VLM"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.11"
+dependencies = [
+  "PyYAML>=6.0",
+  "torch>=2.6",
+]
+
+[project.optional-dependencies]
+runtime = ["peft>=0.18", "transformers>=5.0"]
+dev = ["pytest>=8.0", "ruff>=0.11"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
