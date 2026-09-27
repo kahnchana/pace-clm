@@ -52,32 +52,18 @@ trainable in the CLM-style method.
 
 ## Current status
 
-Repository foundation is complete at initial commit `cfa1a92`:
+PACE-200 development is complete through unchanged-harness timing PAUC-F:
 
-- standalone Apache-2.0 repository and package scaffold;
-- promoted checkpoint/configuration audit and validation;
-- versioned MVP/action configurations;
-- Stream-Gemma integration boundary and causal message builder;
-- frozen backbone feature-extraction and pooling primitives;
-- independent projection heads and learned temperature;
-- eight passing CPU contract tests;
-- clean Ruff lint and formatting checks.
+- real-model extraction checks passed on the pinned promoted PACE-Qwen model;
+- deterministic, video-disjoint train and frozen PACE-200 manifests are saved;
+- reusable features were extracted and the tiny-overfit gate passed at 100%;
+- all five required methods and the feasible width/shared-head/short-label
+  variants were trained and evaluated, with three seeds for trained heads;
+- the existing PACE token baseline remains strongest at 83.70 macro-F1 and
+  80.10 timing PAUC-F; best CLM timing PAUC-F is 65.14 (256-d);
+- reproducible checkpoints, per-example predictions, metrics, scorer outputs,
+  and provenance are under `outputs/`.
 
-No H200 job has been launched yet. The tests avoid loading the 35B model.
-
-## Next execution milestone
-
-Run a small real-model feature-extraction smoke test through the promoted
-PACE-Qwen adapter. It must confirm:
-
-1. the selected final language position follows the exact direct-prefix chat
-   rendering used by the promoted runtime;
-2. multimodal and text-only action extraction return the configured hidden
-   width and never invoke the vocabulary head;
-3. all VLM and PACE adapter parameters remain frozen;
-4. cached and uncached action features are numerically identical;
-5. strictly causal frame access holds on hand-inspected episodes.
-
-After that, build the deterministic balanced PACE training subset and require a
-tiny-set overfit before starting the full MVP head training.
-
+Semantic judged PAUC-F is intentionally out of scope for this timing-only
+pilot. Do not start WEB/EGO; the PACE-200 evidence does not justify advancing
+the CLM method unchanged.

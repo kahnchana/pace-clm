@@ -22,33 +22,33 @@ See [docs/design.md](docs/design.md) for evidence and source locations.
 
 ## Current status
 
-The repository foundation is complete:
+The PACE-200 CLM pilot is complete through timing-only PAUC-F:
 
 - Initialized as a standalone Apache-2.0 project.
 - Audited and pinned the promoted PACE-Qwen base model, revision, adapter, and
   inference protocol.
-- Recorded the promoted adapter SHA-256 in the resolved MVP configuration.
-- Added versioned action descriptions and an explicit `Standby -> Hold` label
-  boundary.
-- Added a narrow Stream-Gemma integration layer for source-contract validation
-  and strictly causal message construction.
-- Added frozen-backbone feature extraction below the vocabulary LM head.
-- Added causally safe final-language-token pooling.
-- Added independent normalized state/action projection heads with a learned
-  logit scale.
-- Added provenance helpers and guarded entry points for extraction, training,
-  PACE-200 evaluation, and the frozen WEB/EGO pilot.
-- Added tests for source-contract validation, causal inputs, label mapping,
-  pooling position, backbone freezing, LM-head bypass, and head gradients.
+- Verified real-model final-token extraction, hidden width 2048, frozen
+  backbone/adapter parameters, LM-head bypass, and cached-action parity.
+- Built deterministic disjoint manifests and reusable features for a balanced
+  768-example PACE-train subset and the frozen 200-video validation set.
+- Passed the 24-example tiny-set overfit gate at 100% accuracy.
+- Trained and evaluated raw cosine, linear, capacity-matched MLP, CLM
+  128/256/512-d, shared-head, and short-label variants over three seeds.
+- Evaluated the existing PACE token-generation decision baseline on the same
+  10,658 causal streaming decisions.
+- Scored seed-42 predictions through the unchanged Stream-Gemma timing PAUC-F
+  implementation and saved per-example predictions, checkpoints, metrics,
+  confusion matrices, manifests, and provenance.
+- Exercised the original PACE response-generation handoff on eight
+  deterministic CLM-selected fires; all eight returned non-empty,
+  query-relevant text for qualitative inspection.
 
-The initial contract suite contains eight passing tests. It uses synthetic
-models and validates the local promoted Stream-Gemma artifact without loading
-the 35B model.
-
-Real-model feature extraction, tiny-set overfitting, MVP training, baselines,
-PACE-200 development evaluation, and the frozen WEB/EGO pilot are intentionally
-still pending. Their required order and completion criteria are tracked in
-[agent_notes/todo.md](agent_notes/todo.md).
+The existing PACE token-generation decision remains strongest (83.70 macro-F1,
+80.10 timing PAUC-F). The best CLM timing score is 65.14 PAUC-F (256-d); the
+best CLM Response F1 across seeds is 60.49 ± 1.75 (short labels). See
+[`agent_notes/experiments/pace200_clm_pilot.md`](agent_notes/experiments/pace200_clm_pilot.md)
+for the concise result table. Semantic judged PAUC-F is intentionally out of
+scope for this timing-only pilot; no WEB/EGO pilot has been run.
 
 ## Repository map
 
@@ -62,7 +62,7 @@ still pending. Their required order and completion criteria are tracked in
 | [`docs/experiment_log.md`](docs/experiment_log.md) | Chronological verified work log |
 | [`agent_notes/overview.md`](agent_notes/overview.md) | Project status and documentation index |
 | [`agent_notes/todo.md`](agent_notes/todo.md) | Full implementation handoff and execution order |
-| [`manifests/`](manifests/) | Future deterministic train/dev/test manifests |
+| [`manifests/`](manifests/) | Deterministic train/dev/test manifests and selection metadata |
 
 ## Development
 
@@ -71,5 +71,5 @@ python -m pip install -e '.[dev]'
 pytest
 ```
 
-The unit tests use synthetic models and do not allocate a GPU. A real 35B
-feature-extraction smoke test is deliberately a separate, explicit step.
+The unit tests use synthetic models and do not allocate a GPU. Real-model
+extraction and evaluation artifacts live under the ignored `outputs/` tree.
