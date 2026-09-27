@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
-"""Entry-point placeholder: training starts only after a feature manifest exists."""
+"""Canonical wrapper for cached-feature head training and PACE-200 evaluation."""
 
-raise SystemExit("feature manifest required; complete extraction smoke tests first")
+from train_and_eval_heads import main
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,35 @@
+{
+  "overlap": [],
+  "train": {
+    "candidate_distribution": {
+      "Hold": 637,
+      "Response": 3142,
+      "Silence": 42730
+    },
+    "examples": 768,
+    "natural_distribution": {
+      "Hold": 637,
+      "Response": 3142,
+      "Silence": 42730
+    },
+    "record_stride": 200,
+    "records_scanned": 881,
+    "seed": 42,
+    "selected_distribution": {
+      "Hold": 256,
+      "Response": 256,
+      "Silence": 256
+    },
+    "timeline_failures": 40,
+    "unique_videos": 353,
+    "videos_scanned": 841
+  },
+  "train_manifest": "manifests/pace_train_balanced_v1.jsonl",
+  "train_sha256": "731cf541652770625a7d7d11a457e30c771d2d57e168426fc62ec3d380471efe",
+  "validation_decisions": 10658,
+  "validation_gold_response_runs": 680,
+  "validation_manifest": "/fsx/home/kranasinghe/repo/stream-gemma/outputs/evals/markii-paucf-200-gemma4-base-zss7-yesno/subset/subset_200_manifest.jsonl",
+  "validation_sha256": "8412b7808bf634d08c1ae8e168b48aa090f18c725ba2c575d245871716624ce9",
+  "validation_videos": 200,
+  "version": "pace-manifests-v1"
+}

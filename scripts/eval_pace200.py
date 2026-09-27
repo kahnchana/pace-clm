@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
-"""PACE-200 is development-only and is not runnable before heads are trained."""
+"""Canonical wrapper for rendering the completed PACE-200 result table."""
 
-raise SystemExit("trained checkpoint and frozen evaluation configuration required")
+from finalize_results import main
+
+if __name__ == "__main__":
+    main()
