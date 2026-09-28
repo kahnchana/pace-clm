@@ -39,7 +39,14 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--split", choices=("train", "pace200"), required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument(
+        "--train-manifest", type=Path,
+        default=ROOT / "manifests/pace_train_balanced_v1.jsonl",
+    )
     parser.add_argument("--max-videos-per-rank", type=int, default=0)
+    parser.add_argument("--save-every-videos", type=int, default=25)
+    parser.add_argument("--video-start", type=int, default=0)
+    parser.add_argument("--shard-suffix", type=str, default="")
     parser.add_argument("--config", type=Path, default=ROOT / "configs/qwen_mvp.yaml")
     return parser.parse_args()
 
@@ -91,7 +98,7 @@ def main() -> None:
 
     metadata = json.loads((STREAM_GEMMA / "datasets/markii/metadata.json").read_text())
     if args.split == "train":
-        selected = read_jsonl(ROOT / "manifests/pace_train_balanced_v1.jsonl")
+        selected = read_jsonl(args.train_manifest)
         records = annotation_records(STREAM_GEMMA / "datasets/markii/train.jsonl")
         groups: dict[str, list[dict]] = defaultdict(list)
         for row in selected:
@@ -111,24 +118,57 @@ def main() -> None:
     video_ids = assigned_video_ids(groups, rank, world)
     if args.max_videos_per_rank:
         video_ids = video_ids[: args.max_videos_per_rank]
+    video_ids = video_ids[args.video_start:]
     val_by_id = {row["video_id"]: row for row in (val_rows or [])}
+    suffix = f".{args.shard_suffix}" if args.shard_suffix else ""
+    shard = args.output_dir / f"{args.split}{suffix}.rank{rank:02d}.pt"
+    existing = torch.load(shard, map_location="cpu", weights_only=False) if shard.is_file() else None
+    if existing and (existing["world_size"] != world or existing["split"] != args.split):
+        raise RuntimeError(f"incompatible existing shard: {shard}")
+    completed = set(existing.get("completed_video_ids", [])) if existing else set()
+    if completed - set(video_ids):
+        raise RuntimeError(f"existing shard has videos outside current assignment: {shard}")
     runtime, extractor = load_runtime(config)
-    action_features = extract_actions(runtime, extractor) if rank == 0 else None
-    output_rows = []
+    action_features = (
+        existing["action_features"] if existing and existing["action_features"] is not None
+        else extract_actions(runtime, extractor) if rank == 0 else None
+    )
+    output_rows = existing["rows"] if existing else []
     started = time.monotonic()
 
+    def save_shard() -> None:
+        temporary = shard.with_suffix(".pt.tmp")
+        torch.save(
+            {
+                "split": args.split,
+                "rank": rank,
+                "world_size": world,
+                "hidden_size": extractor.hidden_size,
+                "rows": output_rows,
+                "completed_video_ids": sorted(completed),
+                "action_features": action_features,
+                "seconds": (float(existing["seconds"]) if existing else 0.0) + time.monotonic() - started,
+                "config": config,
+            },
+            temporary,
+        )
+        os.replace(temporary, shard)
+
     for video_number, video_id in enumerate(video_ids, 1):
+        if video_id in completed:
+            continue
         if args.split == "train":
             selections = groups[video_id]
             raw_index = int(selections[0]["raw_index"])
             timeline = state_timeline(records[raw_index], metadata)
             frame_count = int(timeline["source_stop"])
             emits, states = absolute_timeline(timeline, frame_count)
-            source_indices = list(range(frame_count))
             path = metadata[video_id].get("path") or str(
                 STREAM_GEMMA / "datasets/markii/videos" / f"{video_id}.mp4"
             )
             targets = [(int(row["frame_index"]), row) for row in selections]
+            source_indices = sorted({frame for index, _ in targets
+                                     for frame in range(max(0, index - 31), index + 1)})
             question = timeline["question"]
         else:
             source = val_by_id[video_id]
@@ -141,9 +181,16 @@ def main() -> None:
             targets = [(index, None) for index in range(frame_count)]
             question = source["question"]
 
-        images = runtime._resize(decode_indices(path, source_indices))
-        cache = FrameVisionCache(runtime, limit=max(32, len(images)))
-        cache.prefetch(images)
+        decoded = runtime._resize(decode_indices(path, source_indices))
+        if args.split == "train":
+            images = [None] * frame_count
+            for source_index, image in zip(source_indices, decoded, strict=True):
+                images[source_index] = image
+            cache = FrameVisionCache(runtime, limit=max(32, len(source_indices)))
+        else:
+            images = decoded
+            cache = FrameVisionCache(runtime, limit=max(32, len(images)))
+            cache.prefetch(images)
         for index, selection in targets:
             messages, window_start = gold_messages(
                 question=question,
@@ -153,6 +200,8 @@ def main() -> None:
                 index=index,
             )
             vision = cache.window(images, window_start, index + 1)
+            if args.split == "train":
+                runtime.encode_frames_features(vision)
             feature = extract_one(runtime, extractor, messages, vision).squeeze(0)
             action = (
                 Action[selection["gold_action"]]
@@ -169,8 +218,13 @@ def main() -> None:
                     "timestamp": float(index),
                     "raw_index": raw_index,
                     "window_start": window_start,
+                    "selection_split": selection.get("split") if selection else "pace200",
+                    "selection_stratum": selection.get("stratum") if selection else None,
                 }
             )
+        completed.add(video_id)
+        if len(completed) % args.save_every_videos == 0:
+            save_shard()
         elapsed = time.monotonic() - started
         print(
             f"[rank {rank}] {video_number}/{len(video_ids)} videos "
@@ -178,20 +232,7 @@ def main() -> None:
             flush=True,
         )
 
-    shard = args.output_dir / f"{args.split}.rank{rank:02d}.pt"
-    torch.save(
-        {
-            "split": args.split,
-            "rank": rank,
-            "world_size": world,
-            "hidden_size": extractor.hidden_size,
-            "rows": output_rows,
-            "action_features": action_features,
-            "seconds": time.monotonic() - started,
-            "config": config,
-        },
-        shard,
-    )
+    save_shard()
     print(f"[rank {rank}] wrote {shard} ({len(output_rows)} rows)", flush=True)
 
 
