@@ -37,12 +37,13 @@ from pace_clm.labels import Action
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--split", choices=("train", "pace200"), required=True)
+    parser.add_argument("--split", choices=("train", "pace200", "selection", "final"), required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument(
         "--train-manifest", type=Path,
         default=ROOT / "manifests/pace_train_balanced_v1.jsonl",
     )
+    parser.add_argument("--validation-manifest", type=Path)
     parser.add_argument("--max-videos-per-rank", type=int, default=0)
     parser.add_argument("--save-every-videos", type=int, default=25)
     parser.add_argument("--video-start", type=int, default=0)
@@ -105,7 +106,7 @@ def main() -> None:
             groups[row["video_id"]].append(row)
         val_rows = None
     else:
-        val_path = (
+        val_path = args.validation_manifest or (
             STREAM_GEMMA
             / "outputs/evals/markii-paucf-200-gemma4-base-zss7-yesno/subset/subset_200_manifest.jsonl"
         )
@@ -186,11 +187,10 @@ def main() -> None:
             images = [None] * frame_count
             for source_index, image in zip(source_indices, decoded, strict=True):
                 images[source_index] = image
-            cache = FrameVisionCache(runtime, limit=max(32, len(source_indices)))
+            cache = FrameVisionCache(runtime, limit=32)
         else:
             images = decoded
-            cache = FrameVisionCache(runtime, limit=max(32, len(images)))
-            cache.prefetch(images)
+            cache = FrameVisionCache(runtime, limit=32)
         for index, selection in targets:
             messages, window_start = gold_messages(
                 question=question,
@@ -200,8 +200,7 @@ def main() -> None:
                 index=index,
             )
             vision = cache.window(images, window_start, index + 1)
-            if args.split == "train":
-                runtime.encode_frames_features(vision)
+            runtime.encode_frames_features(vision)
             feature = extract_one(runtime, extractor, messages, vision).squeeze(0)
             action = (
                 Action[selection["gold_action"]]
@@ -218,7 +217,7 @@ def main() -> None:
                     "timestamp": float(index),
                     "raw_index": raw_index,
                     "window_start": window_start,
-                    "selection_split": selection.get("split") if selection else "pace200",
+                    "selection_split": selection.get("split") if selection else args.split,
                     "selection_stratum": selection.get("stratum") if selection else None,
                 }
             )

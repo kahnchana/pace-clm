@@ -49,7 +49,7 @@ The frozen backbone retains the PACE training, but the head loss does not.
    and final valid language-token pooling as the completed CLM run. Check that
    episode-specific prompts and history are represented consistently. Store
    large manifests, feature caches, checkpoints, and reports under
-   `/fsx/sfr/data/kanchana/stream-gemma/pace-clm-mixtures/`. Prefer the
+   `outputs/pace-clm-mixtures/` in the pace-clm repo. Prefer the
    assigned always-on eight-H200 node for extraction and training.
 3. Train the capacity-matched MLP and short-label CLM-256 for each condition,
    with seeds 42/43/44, batch 128, AdamW at `3e-4`, weight decay `1e-3`, and
