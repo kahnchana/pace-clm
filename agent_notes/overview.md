@@ -52,18 +52,20 @@ trainable in the CLM-style method.
 
 ## Current status
 
-PACE-200 development is complete through unchanged-harness timing PAUC-F:
+The PACE-200 pilot, 10% learning curve, data-mixture study, PACE-exposure head
+scale-up, and fresh gate follow-through are complete. The latest independent
+200-video timing-only cohort found the frozen run 5 MLP at 83.38 mean PAUC-F
+across three seeds versus 82.08 for PACE token generation, with fewer fires.
+The CLM head did not show a repeatable advantage over the MLP, and longer
+repeated exposure did not help. The newly dev-selected balanced-MLP margin
+reduced final fires but lowered PAUC-F.
 
-- real-model extraction checks passed on the pinned promoted PACE-Qwen model;
-- deterministic, video-disjoint train and frozen PACE-200 manifests are saved;
-- reusable features were extracted and the tiny-overfit gate passed at 100%;
-- all five required methods and the feasible width/shared-head/short-label
-  variants were trained and evaluated, with three seeds for trained heads;
-- the existing PACE token baseline remains strongest at 83.70 macro-F1 and
-  80.10 timing PAUC-F; best CLM timing PAUC-F is 65.14 (256-d);
-- reproducible checkpoints, per-example predictions, metrics, scorer outputs,
-  and provenance are under `outputs/`.
-
-Semantic judged PAUC-F is intentionally out of scope for this timing-only
-pilot. Do not start WEB/EGO; the PACE-200 evidence does not justify advancing
-the CLM method unchanged.
+Full WEB/EGO transfer and GPT-4.1 judging are now complete. The frozen run 5
+MLP scored 53.50 WEB and 43.95 EGO judged PAUC-F, below the promoted PACE
+Qwen token decision's 57.47 and 46.05. It fired less often but lost judged
+recall. The CLM-style head has not demonstrated an advantage over the ordinary
+MLP, and this MLP has not demonstrated a WEB/EGO advantage over PACE. See
+[`experiments/pace_clm_gate_followthrough.md`](experiments/pace_clm_gate_followthrough.md)
+and [`experiments/pace_clm_web_ego_full.md`](experiments/pace_clm_web_ego_full.md).
+Reproducible checkpoints, manifests, predictions, judge outputs, scorer
+outputs, and provenance are under `outputs/`.

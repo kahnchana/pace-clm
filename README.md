@@ -22,7 +22,8 @@ See [docs/design.md](docs/design.md) for evidence and source locations.
 
 ## Current status
 
-The PACE-200 CLM pilot is complete through timing-only PAUC-F:
+The frozen-head study is complete through full WEB/EGO judged evaluation, after
+a fresh 200-video timing-only comparison with PACE token generation:
 
 - Initialized as a standalone Apache-2.0 project.
 - Audited and pinned the promoted PACE-Qwen base model, revision, adapter, and
@@ -42,13 +43,25 @@ The PACE-200 CLM pilot is complete through timing-only PAUC-F:
 - Exercised the original PACE response-generation handoff on eight
   deterministic CLM-selected fires; all eight returned non-empty,
   query-relevant text for qualitative inspection.
+- Completed a 10% learning curve, six-condition data-mixture study, and a
+  PACE-exposure head scale-up at 263,760 decision presentations and 3,260
+  updates. The CLM head did not establish a repeatable advantage over the MLP,
+  and longer repeated exposure lowered held-out timing PAUC-F.
+- Froze two new video-disjoint 200-video cohorts for a firing-gate follow-up.
+  On the new final set, the frozen run 5 MLP averaged 83.38 timing PAUC-F over
+  three seeds versus 82.08 for PACE token generation, with 3.77 versus 4.43
+  fires/video. The newly selected balanced-MLP margin reduced fires but did not
+  improve final PAUC-F.
+- Completed full WEB/EGO transfer with the frozen run 5 MLP and original Qwen
+  response generator. GPT-4.1 judged PAUC-F was 53.50 WEB / 43.95 EGO, below
+  the promoted PACE token decision's 57.47 / 46.05, despite fewer fires.
 
-The existing PACE token-generation decision remains strongest (83.70 macro-F1,
-80.10 timing PAUC-F). The best CLM timing score is 65.14 PAUC-F (256-d); the
-best CLM Response F1 across seeds is 60.49 ± 1.75 (short labels). See
-[`agent_notes/experiments/pace200_clm_pilot.md`](agent_notes/experiments/pace200_clm_pilot.md)
-for the concise result table. Semantic judged PAUC-F is intentionally out of
-scope for this timing-only pilot; no WEB/EGO pilot has been run.
+The timing-only Markii gain did not transfer to judged WEB/EGO PAUC-F. The
+original PACE-200 pilot results remain documented
+in [`agent_notes/experiments/pace200_clm_pilot.md`](agent_notes/experiments/pace200_clm_pilot.md);
+the full transfer result and its limits are in
+[`agent_notes/experiments/pace_clm_web_ego_full.md`](agent_notes/experiments/pace_clm_web_ego_full.md).
+No new Qwen LoRA training has been run in this project.
 
 ## Repository map
 
