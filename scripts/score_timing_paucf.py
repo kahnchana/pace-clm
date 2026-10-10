@@ -41,10 +41,12 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--result-dir", type=Path, default=Path("outputs/results/pace200_v1"))
     parser.add_argument("--token-dir", type=Path, default=Path("outputs/results/pace_token_v1"))
+    parser.add_argument("--validation-manifest", type=Path)
+    parser.add_argument("--gold", type=Path)
     args = parser.parse_args()
     source_root = STREAM_GEMMA / "outputs/evals/markii-paucf-200-gemma4-base-zss7-yesno"
-    manifest = read_jsonl(source_root / "subset/subset_200_manifest.jsonl")
-    gold = read_json(source_root / "gold/paucf_4s_gold.json")["records"]
+    manifest = read_jsonl(args.validation_manifest or source_root / "subset/subset_200_manifest.jsonl")
+    gold = read_json(args.gold or source_root / "gold/paucf_4s_gold.json")["records"]
     out = args.result_dir / "timing_paucf"
     out.mkdir(parents=True, exist_ok=True)
     summaries = {}

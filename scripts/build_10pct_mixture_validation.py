@@ -33,12 +33,17 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--output-dir", type=Path, required=True)
     p.add_argument("--videos-per-set", type=int, default=200)
+    p.add_argument("--offset", type=int, default=0,
+                   help="Skip this many hash-ordered eligible videos before making the two sets")
     args = p.parse_args()
+    if args.offset < 0:
+        raise ValueError("offset must be nonnegative")
     source = SG / "outputs/evals/markii-paucf-200-gemma4-base-zss7-yesno"
     population = read_jsonl(source / "manifests/valid_population.jsonl")
     old = {r["video_id"] for r in read_jsonl(source / "subset/subset_200_manifest.jsonl")}
     available = [r for r in population if r["video_id"] not in old]
     available.sort(key=lambda r: digest("pace-clm-mixture-val-20260928:" + r["video_id"]))
+    available = available[args.offset:]
     if len(available) < args.videos_per_set * 2:
         raise RuntimeError("insufficient fresh validation videos")
     cohorts = {"selection": available[:args.videos_per_set],

@@ -30,7 +30,7 @@ def main() -> None:
     p.add_argument("--mixture-feature-dir", type=Path)
     p.add_argument("--manifest-dir", type=Path)
     p.add_argument("--output-dir", type=Path, required=True)
-    p.add_argument("--conditions", nargs="+", choices=("run1", "run2", "run3", "run4", "run5"), required=True)
+    p.add_argument("--conditions", nargs="+", choices=("run1", "run2", "run3", "run4", "run5", "run5_hold2"), required=True)
     p.add_argument("--worker", action="store_true")
     args = p.parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -66,7 +66,7 @@ def main() -> None:
     descriptive = old["action_features"].float().to(device)
     short = variants["short_labels"].float().to(device)
     selected = None
-    if any(c in ("run3", "run4", "run5") for c in args.conditions):
+    if any(c in ("run3", "run4", "run5", "run5_hold2") for c in args.conditions):
         if not args.mixture_feature_dir or not args.manifest_dir:
             raise ValueError("new-selection conditions require mixture features and manifests")
         selected = torch.load(args.mixture_feature_dir / "union.pt", map_location="cpu", weights_only=False)
@@ -79,12 +79,14 @@ def main() -> None:
             train_meta = [old["metadata"][i] for i in train_ids]
             class_weights = torch.tensor(PRIOR[condition], device=device) * 3
         else:
-            rows = [json.loads(line) for line in (args.manifest_dir / f"{condition}.jsonl").read_text().splitlines()]
+            manifest_name = "run5" if condition == "run5_hold2" else condition
+            rows = [json.loads(line) for line in (args.manifest_dir / f"{manifest_name}.jsonl").read_text().splitlines()]
             indices = [lookup[(r["video_id"], int(r["frame_index"]))] for r in rows]
             train_x = selected["features"][indices].float().to(device)
             train_y = selected["targets"][indices].long().to(device)
             train_meta = rows
-            class_weights = torch.ones(3, device=device)
+            class_weights = (torch.tensor((1.0, 1.0, 2.0), device=device)
+                             if condition == "run5_hold2" else torch.ones(3, device=device))
         if len(train_y) != 24300:
             raise RuntimeError(f"{condition}: expected 24300 positions, got {len(train_y)}")
         sample_weights = class_weights[train_y]

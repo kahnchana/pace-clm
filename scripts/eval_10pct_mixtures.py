@@ -55,11 +55,13 @@ def breakdown(logits: torch.Tensor, targets: torch.Tensor, metadata: list[dict])
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--set", choices=("selection", "final"), required=True)
-    p.add_argument("--conditions", nargs="+", choices=("control", "run1", "run2", "run3", "run4", "run5", "selected", "balanced"), required=True)
+    p.add_argument("--conditions", nargs="+", choices=("control", "run1", "run2", "run3", "run4", "run5", "run5_early", "run5_hold2", "selected", "balanced"), required=True)
     p.add_argument("--scaleup", action="store_true")
     p.add_argument("--feature-dir", type=Path, required=True)
     p.add_argument("--validation-dir", type=Path, required=True)
     p.add_argument("--checkpoint-dir", type=Path, required=True)
+    p.add_argument("--early-checkpoint-dir", type=Path)
+    p.add_argument("--hold2-checkpoint-dir", type=Path)
     p.add_argument("--old-result-dir", type=Path, required=True)
     p.add_argument("--old-feature-dir", type=Path, required=True)
     p.add_argument("--output-dir", type=Path, required=True)
@@ -83,6 +85,8 @@ def main() -> None:
         for method in ("mlp", "clm_short_256"):
             for seed in (42, 43, 44):
                 path = (a.old_result_dir / f"{method}.n24300.seed{seed}.pt" if condition == "control"
+                        else a.early_checkpoint_dir / f"run5_early.{method}.seed{seed}.pt" if condition == "run5_early" and a.early_checkpoint_dir
+                        else a.hold2_checkpoint_dir / f"run5_hold2.{method}.seed{seed}.pt" if condition == "run5_hold2" and a.hold2_checkpoint_dir
                         else a.checkpoint_dir / f"{condition}.{method}.seed{seed}.pt")
                 checkpoint = torch.load(path, map_location="cpu", weights_only=False)
                 model = build_model(method, int(val["hidden_size"]), 256 if method == "clm_short_256" else 0).to(device)

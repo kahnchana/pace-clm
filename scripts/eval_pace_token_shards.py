@@ -34,7 +34,9 @@ from pace_clm.labels import Action
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--validation-manifest", type=Path)
     parser.add_argument("--max-videos-per-rank", type=int, default=0)
+    parser.add_argument("--save-every-videos", type=int, default=5)
     args = parser.parse_args()
     rank = int(os.environ.get("RANK", "0"))
     local_rank = int(os.environ.get("LOCAL_RANK", str(rank)))
@@ -52,7 +54,7 @@ def main() -> None:
         STREAM_GEMMA
         / "outputs/evals/markii-paucf-200-gemma4-base-zss7-yesno/subset/subset_200_manifest.jsonl"
     )
-    rows = read_jsonl(val_path)
+    rows = read_jsonl(args.validation_manifest or val_path)
     # Identical deterministic length-balanced assignment as feature extraction.
     bins: list[list[dict]] = [[] for _ in range(world)]
     loads = [0] * world
@@ -65,11 +67,24 @@ def main() -> None:
     assigned = sorted(bins[rank], key=lambda row: row["video_id"])
     if args.max_videos_per_rank:
         assigned = assigned[: args.max_videos_per_rank]
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    path = args.output_dir / f"pace_token.rank{rank:02d}.jsonl"
+    output = read_jsonl(path) if path.exists() else []
+    completed = {row["video_id"] for row in output}
+    if completed - {row["video_id"] for row in assigned}:
+        raise RuntimeError(f"existing token shard has videos outside current assignment: {path}")
+
+    def save() -> None:
+        temporary = path.with_suffix(".jsonl.tmp")
+        temporary.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in output))
+        os.replace(temporary, path)
+
     records = annotation_records(STREAM_GEMMA / "datasets/markii/val.jsonl")
     metadata = json.loads((STREAM_GEMMA / "datasets/markii/metadata.json").read_text())
-    output = []
     started = time.monotonic()
     for number, source in enumerate(assigned, 1):
+        if source["video_id"] in completed:
+            continue
         timeline = state_timeline(records[int(source["raw_index"])], metadata)
         count = int(source["inference_frame_count"])
         emits, states = absolute_timeline(timeline, count)
@@ -116,14 +131,15 @@ def main() -> None:
                     "malformed": parsed is None,
                 }
             )
+        completed.add(source["video_id"])
+        if len(completed) % args.save_every_videos == 0:
+            save()
         print(
             f"[rank {rank}] {number}/{len(assigned)} videos {len(output)} decisions "
             f"{time.monotonic() - started:.1f}s",
             flush=True,
         )
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-    path = args.output_dir / f"pace_token.rank{rank:02d}.jsonl"
-    path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in output))
+    save()
     print(f"[rank {rank}] wrote {path}", flush=True)
 
 
