@@ -73,6 +73,7 @@ No new Qwen LoRA training has been run in this project.
 | [`scripts/`](scripts/) | Guarded execution entry points |
 | [`docs/design.md`](docs/design.md) | Source audit, design decisions, and attribution |
 | [`docs/experiment_log.md`](docs/experiment_log.md) | Chronological verified work log |
+| [`docs/exp_plan.md`](docs/exp_plan.md) | Ten-run, one-node follow-up experiment plan |
 | [`agent_notes/overview.md`](agent_notes/overview.md) | Project status and documentation index |
 | [`agent_notes/todo.md`](agent_notes/todo.md) | Full implementation handoff and execution order |
 | [`manifests/`](manifests/) | Deterministic train/dev/test manifests and selection metadata |

@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "seed": 42,
+  "runs": {
+    "E01": {"method": "clm_short_256", "intervention": "missed_window", "pair": "E02"},
+    "E02": {"method": "mlp", "intervention": "missed_window", "pair": "E01"},
+    "E03": {"method": "clm_short_256", "intervention": "pace_distillation", "pair": "E04"},
+    "E04": {"method": "mlp", "intervention": "pace_distillation", "pair": "E03"},
+    "E05": {"method": "clm_short_256", "intervention": "generated_history", "pair": "E06"},
+    "E06": {"method": "mlp", "intervention": "generated_history", "pair": "E05"},
+    "E07": {"method": "clm_short_256", "intervention": "causal_gru", "pair": "E08"},
+    "E08": {"method": "mlp", "intervention": "causal_gru", "pair": "E07"},
+    "E09": {"method": "clm_short_256", "intervention": "answer_utility", "pair": "E10"},
+    "E10": {"method": "mlp", "intervention": "answer_utility", "pair": "E09"}
+  },
+  "training": {
+    "positions": 24300,
+    "dev_positions": 2700,
+    "optimizer": "AdamW",
+    "learning_rate": 0.0003,
+    "weight_decay": 0.001,
+    "batch_size": 128,
+    "max_epochs": 60,
+    "early_stop_patience": 6,
+    "early_stop_metric": "internal_dev_cross_entropy"
+  },
+  "interventions": {
+    "missed_window": {"response_replacement_fraction": 0.2, "ranking_loss_weight": 0.25, "ranking_margin_logit": 0.2},
+    "pace_distillation": {"gold_ce_weight": 0.5, "teacher_kl_weight": 0.5, "temperature": 2.0},
+    "generated_history": {"replay_view_fraction": 0.5},
+    "causal_gru": {"preceding_states": 3, "hidden_width": 256},
+    "answer_utility": {"candidate_count": 4000, "missed_valid_window": 2000, "current_head_fire": 1000, "near_window_negative": 1000, "mse_weight": 0.25, "alpha_grid": [0, 0.25, 0.5, 1]}
+  },
+  "selection": {
+    "judge": "gpt-4.1",
+    "scorer": "markii-pauc-f-v1",
+    "omega": 0.5,
+    "finalist_count_max": 2,
+    "precision_drop_limit_points": 1.0
+  }
+}

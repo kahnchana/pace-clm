@@ -26,6 +26,7 @@ from stream_gemma.inference.qwen_stream import QwenRuntime
 
 from pace_clm.backbone import FrozenFeatureExtractor, assert_frozen
 from pace_clm.config import load_mvp_config
+from pace_clm.experiment import state_timeline
 
 
 def decode_first(path: str) -> Image.Image:
@@ -67,10 +68,26 @@ def main() -> None:
         default=STREAM_GEMMA
         / "outputs/evals/markii-paucf-200-gemma4-base-zss7-yesno/subset/subset_200_manifest.jsonl",
     )
+    parser.add_argument("--training-video", action="store_true",
+                        help="Use the first frozen run5 training video for the smoke test")
     parser.add_argument("--output", type=Path, default=ROOT / "outputs/smoke/real_model.json")
     args = parser.parse_args()
     config = load_mvp_config(args.config)
-    row = json.loads(args.manifest.read_text().splitlines()[0])
+    if args.training_video:
+        selected = json.loads((ROOT / "outputs/pace-clm-mixtures/manifests/run5.jsonl")
+                              .read_text().splitlines()[0])
+        video_id = selected["video_id"]
+        metadata = json.loads((STREAM_GEMMA / "datasets/markii/metadata.json").read_text())
+        source = metadata[video_id]
+        raw_record = json.loads((STREAM_GEMMA / "datasets/markii/train.jsonl")
+                                .read_text().splitlines()[int(selected["raw_index"])])
+        timeline = state_timeline(raw_record, metadata)
+        row = {"video_id": video_id,
+               "resolved_video_path": source.get("path") or str(
+                   STREAM_GEMMA / "datasets/markii/videos" / f"{video_id}.mp4"),
+               "inference_source_indices": [0], "question": timeline["question"]}
+    else:
+        row = json.loads(args.manifest.read_text().splitlines()[0])
 
     runtime = QwenRuntime.load(
         checkpoint=str((ROOT / config["model"]["adapter"]).resolve()),

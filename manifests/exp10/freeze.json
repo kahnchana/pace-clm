@@ -1,0 +1,38 @@
+{
+  "available_count": 710,
+  "hash_salt": "pace-clm-exp10-20261010:",
+  "old_cohort_counts": {
+    "/fsx/home/kranasinghe/repo/stream-gemma/outputs/evals/markii-paucf-200-gemma4-base-zss7-yesno/subset/subset_200_manifest.jsonl": 200,
+    "outputs/pace-clm-gate/validation/final.jsonl": 200,
+    "outputs/pace-clm-gate/validation/selection.jsonl": 200,
+    "outputs/pace-clm-mixtures/validation/final.jsonl": 200,
+    "outputs/pace-clm-mixtures/validation/selection.jsonl": 200
+  },
+  "old_cohort_sha256": {
+    "/fsx/home/kranasinghe/repo/pace-clm/outputs/pace-clm-gate/validation/final.jsonl": "61de60842a3e889752830d8293cfa30c3cfca5944720f1b6295b8b4a2f0f4f9a",
+    "/fsx/home/kranasinghe/repo/pace-clm/outputs/pace-clm-gate/validation/selection.jsonl": "025756db17da2b9023be623a89be0192192afe8a5a80bd1dc530ff930eb6c409",
+    "/fsx/home/kranasinghe/repo/pace-clm/outputs/pace-clm-mixtures/validation/final.jsonl": "7f71941048c74943af2b6087034f307925f490d5980cf145fa28711fd9e90b3d",
+    "/fsx/home/kranasinghe/repo/pace-clm/outputs/pace-clm-mixtures/validation/selection.jsonl": "823587258baa3b90f08b2479276f797eb9d936432ebc0b18c89f71d149c2784d",
+    "/fsx/home/kranasinghe/repo/stream-gemma/outputs/evals/markii-paucf-200-gemma4-base-zss7-yesno/subset/subset_200_manifest.jsonl": "8412b7808bf634d08c1ae8e168b48aa090f18c725ba2c575d245871716624ce9"
+  },
+  "plan": "docs/exp_plan.md",
+  "sets": {
+    "confirmation": {
+      "frames": 11465,
+      "gold_sha256": "c3ac14ba3417e2573d3762b6b6c5387697bc9ee64c8975a49e0183c1af21f424",
+      "gold_windows": 718,
+      "manifest_sha256": "f0996c755821d02d9a23e7fa043fcd7227fccea63195cef91e135ce48708427c",
+      "videos": 200
+    },
+    "selection": {
+      "frames": 11553,
+      "gold_sha256": "e3fe32dfa8ad113bdc919e5f3253b21ebefd3b9cb7d39f6a73bf223f0dc16c8e",
+      "gold_windows": 712,
+      "manifest_sha256": "baf8349c3cd82796fc40bd9b9673864896e97d43d1e53dfcb20dd88629ed716e",
+      "videos": 200
+    }
+  },
+  "source_sha256": "fc4597fa3321612a60209e24cafc2d3868f8bdfe76349a5c668815382a112905",
+  "training_pool_sha256": "e9eac1f289ce5b54c8ad94f3f475adc1187770b7c377f725549e2f6f1588e43a",
+  "untouched_count": 310
+}

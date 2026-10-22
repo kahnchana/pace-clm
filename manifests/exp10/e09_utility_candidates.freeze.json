@@ -1,0 +1,11 @@
+{
+  "candidate_manifest_sha256": "18d34ca20d5ee66d5630521543f2c158a15a0d5b5bf85c5f64c004f1cbb26036",
+  "candidates": 4000,
+  "category_counts": {
+    "current_head_fire": 1000,
+    "missed_valid_window": 2000,
+    "near_window_negative": 1000
+  },
+  "inside_gold_window": 2875,
+  "training_rollout_sha256": "e65dd18c2a9624fbae08da8adb04a82499b8df3ecceb2b3e00a05e365f05c797"
+}

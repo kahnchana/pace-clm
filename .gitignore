@@ -10,3 +10,7 @@ artifacts/
 checkpoints/
 outputs/
 .env
+
+# Generated exp10 cohorts and training data stay local; commit config and freeze hashes.
+manifests/exp10/*.jsonl
+manifests/exp10/*.gold.json

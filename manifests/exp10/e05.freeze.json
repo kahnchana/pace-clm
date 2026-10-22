@@ -1,0 +1,15 @@
+{
+  "ambiguous_excluded": 0,
+  "cache_sha256": "9ed2a36a63fd9da39fd5c0c9aaf2a54126098c02ac33e23e6a6907b50f90e245",
+  "class_counts": {
+    "Hold": 656,
+    "Response": 3791,
+    "Silence": 19853
+  },
+  "generated_history_views": 12150,
+  "gold_history_views": 12150,
+  "manifest_sha256": "e8d5330376a4bc73f66273af25e8e758817b152ae591c65e552edfd5f89b36be",
+  "refilled_positions": 0,
+  "rollout_predictions_sha256": "e65dd18c2a9624fbae08da8adb04a82499b8df3ecceb2b3e00a05e365f05c797",
+  "train_positions": 24300
+}

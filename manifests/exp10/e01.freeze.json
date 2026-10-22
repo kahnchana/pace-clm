@@ -1,0 +1,17 @@
+{
+  "class_counts": {
+    "Hold": 656,
+    "Response": 3791,
+    "Silence": 19853
+  },
+  "feature_positions": 25709,
+  "features_sha256": "aa39a5217249da4835c10d115adbc4ef1bb6500f88a0b292dc8fc2b0b136944e",
+  "maximum_per_video": 14,
+  "ranking_triples": 758,
+  "replaced_responses": 758,
+  "rollout_predictions_sha256": "e65dd18c2a9624fbae08da8adb04a82499b8df3ecceb2b3e00a05e365f05c797",
+  "run5_sha256": "75f0c9798301c2ed82e8e07c4f79ea6b4f4f0a2c49c0cd6893828a46060627a2",
+  "train_positions": 24300,
+  "train_sha256": "13e0499a6dc442d4832b964c88a93259c0dbec46065d01ff1b958d31dc6672f3",
+  "triples_sha256": "64ad10f72736b33cbc303a1f42ea894b9dd6f38972d0e94b6e47be9ec11b1ec4"
+}

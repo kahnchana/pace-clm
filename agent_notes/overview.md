@@ -23,6 +23,7 @@ these checked-in notes over chat history.
 | [`../README.md`](../README.md) | User-facing project status, pinned contract, and repository map |
 | [`../docs/design.md`](../docs/design.md) | Promoted PACE-Qwen audit, integration boundary, label semantics, feature contract, and attribution |
 | [`../docs/experiment_log.md`](../docs/experiment_log.md) | Chronological record of completed and verified work |
+| [`../docs/exp_plan.md`](../docs/exp_plan.md) | Ten-run, one-node follow-up experiment plan |
 | [`../configs/qwen_mvp.yaml`](../configs/qwen_mvp.yaml) | Pinned model, adapter hash, streaming protocol, projection architecture, and seed |
 | [`../configs/actions_v1.yaml`](../configs/actions_v1.yaml) | Exact versioned action descriptions used for action features |
 | [`../manifests/README.md`](../manifests/README.md) | Manifest policy and WEB/EGO pilot guardrail |

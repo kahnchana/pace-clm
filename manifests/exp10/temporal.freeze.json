@@ -1,0 +1,9 @@
+{
+  "dev_positions": 2700,
+  "feature_manifest_sha256": "cd802e1b2e87caac4998380c156ba422b24691e5d2f02a286854cdd44655086f",
+  "feature_positions": 96973,
+  "source_dev_sha256": "8bc7ac3bbc25a7122bff7047a8c1b4992b7354bbe16328c6dd59b7b843b59742",
+  "source_run5_sha256": "75f0c9798301c2ed82e8e07c4f79ea6b4f4f0a2c49c0cd6893828a46060627a2",
+  "train_positions": 24300,
+  "videos": 8435
+}

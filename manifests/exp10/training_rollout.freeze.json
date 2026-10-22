@@ -1,0 +1,11 @@
+{
+  "frames": 624989,
+  "gold_sha256": "f059f99f6d65ba79426ebbd8d00f554c195d9f33f15d519307bac7c90f500a93",
+  "gold_windows": 40845,
+  "manifest_sha256": "f2d4a00f7f49b56a3960294fb8aa1780a1206f06da1beaaa51e44bc8b785a4f7",
+  "positions": 24300,
+  "source_annotations_sha256": "56eca078267cbe5960be23abc1118099877fe16121388100d73c7469d3b51906",
+  "source_metadata_sha256": "51f806cfc7e79e2b936b63e4703990890d60db66fd1079057fcc53173bccd0bf",
+  "source_run5_sha256": "75f0c9798301c2ed82e8e07c4f79ea6b4f4f0a2c49c0cd6893828a46060627a2",
+  "videos": 7431
+}
