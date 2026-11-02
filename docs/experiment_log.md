@@ -69,3 +69,67 @@
 - Saved full predictions, judge outputs, scored records, and summaries under
   `outputs/pace-clm-web-ego-full/`. Promoted PACE WEB/EGO raw outputs are absent
   locally, preventing paired video bootstrap and baseline rescoring.
+
+## 2026-10-22 — JevAny streaming pilot and 10% launch
+
+- Pinned JevAny at `b273aea682e5b748a2605808e52ccafb7a378924`, kept its
+  Apache-2.0 license, and verified the promoted PACE adapter SHA-256
+  `eb11e600de59edf48ef2d71bb632ae5944c0474441f264bb3ce6ceae8bb71da9`.
+- Rebuilt the promoted episode exposure: 26,080 episodes and 263,760 supervised
+  positions (215,502 Silence, 7,038 Hold, 41,220 Response). The manifest SHA-256
+  is `5451fab4bc38f49719044d5c348d9541c7539a4a49d258760889225c63db8176`.
+- Passed the three-state real-model smoke. All 500 intended LoRA tensors received
+  gradients. A 32-frame case admitted all 5,859 expanded tokens and passed
+  forward/backward with the isolated FLA 0.3.2 kernel at 122.0 GiB peak
+  allocated GPU memory. The fallback Qwen kernel OOMed on the same case.
+- Ran J0 and J1 tiny pilots on the same nine examples, three passes, seed 42.
+  J0 mean loss fell from 1.87 on pass one to 0.27 on pass three; J1 fell from
+  1.90 to 0.33. These are overfit plumbing checks, not quality comparisons.
+  J1 checkpoint reload passed and the original generator adapter hash stayed
+  unchanged.
+- Launched the single-seed 10% J1 run on the eight H200s already allocated by
+  Slurm job 36781. The training log is
+  `outputs/jevany/logs/full-current-node.log`; resumable checkpoints go under
+  `outputs/jevany/full-j1-seed42/`. Training and held-out validation results
+  are pending.
+
+## 2026-10-23 — JevAny run recovery and evaluation wiring
+
+- The first full attempt reached optimizer step 50 with recent loss 0.123, then
+  was restarted because its forward-only vision cache caused the frozen visual
+  tower to run again during activation-checkpoint backward replay. No checkpoint
+  existed, so these updates are excluded from the replacement run.
+- The replacement run began at 00:35:57 UTC in allocation 36781, seed 42, with
+  the cache fix. It saves first at step 25, then every 250 steps. The compiled
+  Triton cache is on the node's large `/dev/shm` filesystem.
+- `scripts/run_jevany_posttrain.sh` monitors the run, resumes up to three
+  interrupted attempts from checkpoints, and then launches judged selection
+  and final validation plus complete WEB/EGO rollouts and existing scorers.
+  Live logs and current status are under `outputs/jevany/`; numerical results
+  remain pending.
+- Step 25 completed at 01:28 UTC with recent training loss 0.2524. The first
+  complete 888 MB recovery checkpoint includes all eight RNG states, optimizer,
+  pointer head, and controller adapter. Held-out results remain pending.
+
+## 2026-10-24 — JevAny full training complete
+
+- J1 seed 42 completed one pass over all 263,760 supervised presentations on
+  eight H200s: 8,243 optimizer updates and final checkpoint step 8,243. Total
+  training time after load was 91,742 seconds. Generated-response validation
+  and WEB/EGO judging are next; training loss alone is not a quality result.
+
+## 2026-10-24 — Full WEB/EGO evaluation launched
+
+- A final-checkpoint one-video WEB probe passed on GPU 7: 15 controller
+  decisions, two valid response events, no malformed emissions, and 253 seconds
+  of rollout time. This exercised both the trained controller and the original
+  generator adapter.
+- The complete 500-video WEB rollout began on all eight GPUs in tmux session
+  `jevany-posttrain` at 02:23 UTC. The 326-video EGO rollout follows on the
+  same eight GPUs. Full WEB predictions are judged with GPT-4.1 as soon as
+  merging finishes, concurrently with EGO inference; EGO judging follows its
+  complete rollout. Selection/final validation follow the benchmark scores.
+- The evaluation log is `outputs/jevany/logs/posttrain.log`. A separate
+  `jevany-watch` session can restart resumable evaluation if its worker exits
+  before `outputs/jevany/reports/full-results.json` is written. Numerical
+  benchmark results remain pending.
