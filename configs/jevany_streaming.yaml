@@ -1,0 +1,34 @@
+version: jevany-streaming-pilot-v1
+seed: 42
+reference:
+  repository: https://github.com/SimpleJev/JevAny
+  commit: b273aea682e5b748a2605808e52ccafb7a378924
+  readout: jevany.model.PointerHead q/k dot product
+  license: Apache-2.0
+pace:
+  model_config: qwen_mvp.yaml
+  training_exposure: promoted-v25-last-response-long-neg
+  manifest: outputs/jevany/manifests/train.jsonl
+  manifest_sha256: 5451fab4bc38f49719044d5c348d9541c7539a4a49d258760889225c63db8176
+  episodes: 26080
+  decisions: 263760
+controller:
+  actions: [Silence, Hold, Response]
+  pointer_width: 256
+  candidate_config: actions_v1.yaml
+  vision: frozen
+  generator: original-promoted-PACE-adapter
+runtime:
+  python: ../stream-gemma/.venv/bin/python
+  fla_core: 0.3.2
+  flash_linear_attention: 0.3.2
+  dependency_path: outputs/jevany/deps032
+  full_context_required: true
+training:
+  pilot_seed: 42
+  full_seed: 42
+  head_lr: 0.0001
+  lora_lr: 0.000002
+  gradient_accumulation_per_gpu: 4
+  full_world_size: 8
+  full_epochs: 1

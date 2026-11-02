@@ -67,3 +67,33 @@ than silently pooling the wrong token.
 The causal message topology is adapted from Stream-Gemma. The independent
 normalized state/action projections and learned temperature follow the
 Apache-2.0 CLM project: https://github.com/Contrastive-LM/CLM
+
+## JevAny streaming controller (2026-10-22)
+
+`src/pace_clm/jevany_streaming.py` adds a candidate-conditioned pointer over
+the promoted PACE decoder. The q/k dot-product readout follows JevAny commit
+`b273aea682e5b748a2605808e52ccafb7a378924` (Apache-2.0). The local
+reference checkout is under `third_party/JevAny`; no upstream patch was made.
+J0 trains only this pointer. J1 trains the same pointer and the existing PACE
+LoRA tensors. Neither run updates the frozen visual encoder.
+
+Each decision preserves the native PACE system instruction, query, last-response
+memory, timestamped one-frame user turns, and prior assistant emissions from
+the sampled episode. Fixed action descriptions and a final decision marker are
+appended to the current user turn. The pointer compares the final marker's
+decoder state with states at the three option ends, all within the same causal
+forward pass. The original PACE adapter remains the separate generator source;
+the controller checkpoint is stored separately.
+
+`scripts/prepare_jevany_decisions.py` invokes Stream-Gemma's promoted v25
+episode builder with the long-negative settings. It exports all 26,080 episodes
+and 263,760 supervised presentations, including trailing and post-response
+negatives. The deterministic manifest hash is recorded in
+`configs/jevany_streaming.yaml`. The existing balanced 27,000-decision head
+manifest is not used for this controller study.
+
+The 32-frame, 5,859-token real-model smoke requires the isolated
+`fla-core==0.3.2` and `flash-linear-attention==0.3.2` runtime. Qwen's PyTorch
+gated-delta fallback OOMs on a 144 GiB H200 for that case. The FLA kernel passed
+forward and backward at 122.0 GiB peak allocated GPU memory. The shared
+Stream-Gemma Python environment was not modified.

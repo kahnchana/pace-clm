@@ -10,6 +10,7 @@ artifacts/
 checkpoints/
 outputs/
 .env
+third_party/JevAny/
 
 # Generated exp10 cohorts and training data stay local; commit config and freeze hashes.
 manifests/exp10/*.jsonl
