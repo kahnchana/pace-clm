@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -19,6 +20,14 @@ def main() -> None:
     p.add_argument("benchmark", choices=("web", "ego"))
     p.add_argument("--pred-dir", type=Path, required=True)
     a = p.parse_args()
+    summary = a.pred_dir / "pauc_f_summary-gpt-4.1-v1.json"
+    if summary.is_file():
+        result = json.loads(summary.read_text())
+        expected = 500 if a.benchmark == "web" else 326
+        if result.get("num_videos") != expected:
+            raise ValueError(f"incomplete existing {a.benchmark} score: {summary}")
+        print(f"Complete {a.benchmark} GPT-4.1 score already exists: {summary}")
+        return
     load_gateway_key()
     gold = SG / f"datasets/proactive-videoqa-{a.benchmark}/anno.json"
     subprocess.run([sys.executable, "-m", "zs_infer.scoring", "web", "all",
