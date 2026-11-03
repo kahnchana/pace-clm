@@ -22,6 +22,7 @@ from generate_selected_responses import forced_response
 from stream_gemma.config import SYSTEM_PROMPT
 from stream_gemma.episode import STATE_TAGS
 from stream_gemma.inference.qwen_stream import QwenRuntime
+from stream_gemma.inference.closed_api import VertexGeminiRuntime
 from zs_infer.adapters import web
 
 from pace_clm.experiment import decode_indices
@@ -30,6 +31,44 @@ from pace_clm.jevany_streaming import (
     response_blind_messages,
 )
 from pace_clm.stream_gemma_adapter import validate_promoted_contract
+
+
+GEMINI_BASE_PROMPT = (
+    "Answer the standing video request using only frames observed through the "
+    "current timestamp. Give one concise factual sentence in plain text. "
+    "Do not emit streaming control tags."
+)
+GEMINI_PROMPT_VARIANTS = {
+    "baseline": "",
+    "event_boundary": (
+        "Treat an uninterrupted action as one event. A new frame, camera angle, "
+        "small movement, or incremental progress is not a new action. If the "
+        "current action has already been described and is merely continuing, "
+        "repeat the earlier sentence exactly. Describe a new action only when "
+        "it begins or resumes after stopping."
+    ),
+    "no_premature_absence": (
+        "Report only an action positively visible in the observed frames. "
+        "Do not say that an action has not happened yet, predict a later action, "
+        "or describe preparation for an action as the action itself. If the "
+        "requested action is not visible, answer exactly: 'The requested "
+        "action is not visible in the observed frames.' Keep that sentence "
+        "identical on later calls until evidence appears."
+    ),
+    "stable_action_words": (
+        "Name the requested action in one short actor-verb-object clause. For "
+        "the same action, keep the same verb and object words in every answer. "
+        "Do not add tool, location, or progress details unless they materially "
+        "change the answer to the user's question. Do not paraphrase an earlier "
+        "answer just to describe the same action."
+    ),
+    "current_event_only": (
+        "Answer only with the question-relevant action visible at the current "
+        "timestamp. Do not recap earlier actions, combine past and current "
+        "actions into a running summary, or mention a background process unless "
+        "it is the requested new action. Use one plain sentence."
+    ),
+}
 
 
 def digest(path: Path) -> str:
@@ -75,6 +114,25 @@ def base_answer(runtime, messages: list[dict], vision: list, max_new_tokens: int
     )[0].strip()
 
 
+def gemini_answer(provider: VertexGeminiRuntime, messages: list[dict],
+                  max_new_tokens: int, prompt_variant: str = "baseline") -> str:
+    """Generate one answer from the same causal frame window as the controller."""
+    addition = GEMINI_PROMPT_VARIANTS[prompt_variant]
+    system_text = GEMINI_BASE_PROMPT + ("\n\n" + addition if addition else "")
+    request = [{"role": "system", "content": [{"type": "text", "text": system_text}]}]
+    for index, message in enumerate(messages[1:]):
+        if message["role"] == "assistant":
+            emitted = str(message["content"][0]["text"])
+            if emitted.startswith(STATE_TAGS["Response"]):
+                request.append({"role": "user", "content": [{"type": "text", "text":
+                    f"Earlier answer: {emitted[len(STATE_TAGS['Response']):].strip()}"}]})
+        else:
+            request.append(message)
+    request.append({"role": "user", "content": [{"type": "text", "text":
+        "Answer the request for the current frame now."}]})
+    return provider.generate_messages(request, max_new_tokens=max_new_tokens).strip()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--controller", type=Path, required=True,
@@ -84,10 +142,18 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--response-margin", type=float, default=0.0)
     parser.add_argument("--max-videos", type=int, default=0)
+    parser.add_argument("--selection-ids", type=Path,
+                        help="JSON array of benchmark question IDs to evaluate")
     parser.add_argument("--max-new-tokens", type=int, default=96)
-    parser.add_argument("--answer-model", choices=("promoted", "base"), default="promoted",
-                        help="Adapter used for Response text; base disables all LoRA adapters")
+    parser.add_argument("--answer-model", choices=("promoted", "base", "gemini-3.8-flash"),
+                        default="promoted", help="Generator used for Response text")
+    parser.add_argument("--gemini-prompt-variant", choices=tuple(GEMINI_PROMPT_VARIANTS),
+                        default="baseline")
+    parser.add_argument("--record-action-logits", action="store_true",
+                        help="Store per-decision raw action logits in each rollout row")
     args = parser.parse_args()
+    if args.gemini_prompt_variant != "baseline" and args.answer_model != "gemini-3.8-flash":
+        parser.error("Gemini prompt variants require --answer-model gemini-3.8-flash")
     if bool(args.validation_manifest) == bool(args.benchmark):
         parser.error("specify exactly one of --validation-manifest or --benchmark")
     rank = int(os.environ.get("RANK", "0"))
@@ -123,6 +189,14 @@ def main() -> None:
         split = args.benchmark
         source_hash = digest(source)
         source_fps = 2 if split == "web" else 6
+    if args.selection_ids:
+        selected_ids = json.loads(args.selection_ids.read_text())
+        if not isinstance(selected_ids, list) or len(set(selected_ids)) != len(selected_ids):
+            raise ValueError("selection IDs must be a unique JSON array")
+        by_id = {row["question_id"]: row for row in rows}
+        if set(selected_ids) - by_id.keys():
+            raise ValueError("selection contains IDs absent from benchmark")
+        rows = [by_id[question_id] for question_id in selected_ids]
     if args.max_videos:
         rows = rows[:args.max_videos]
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -131,7 +205,10 @@ def main() -> None:
         "controller_adapter_sha256": digest(controller_adapter),
         "pointer_head_sha256": digest(pointer_path),
         "answer_model": args.answer_model,
-        "answer_prompt": "base-native-v2" if args.answer_model == "base" else "pace-forced-response",
+        "answer_location": "global" if args.answer_model == "gemini-3.8-flash" else None,
+        "answer_prompt": ("base-native-v2" if args.answer_model == "base" else
+                          "gemini-causal-window-v1" if args.answer_model == "gemini-3.8-flash"
+                          else "pace-forced-response"),
         "original_generator_adapter_sha256": (digest(Path(contract["adapter"]) / "adapter_model.safetensors")
                                               if args.answer_model == "promoted" else None),
         "response_margin": args.response_margin, "max_new_tokens": args.max_new_tokens,
@@ -140,11 +217,21 @@ def main() -> None:
         "question_ids": [row["question_id"] for row in rows],
         "controller_history": "response-blind" if response_blind else "j1-original",
     }
+    if args.answer_model == "gemini-3.8-flash":
+        protocol["empty_answer_policy"] = "retry-with-256-visible-tokens-then-explicit-unavailable-v1"
+        if args.gemini_prompt_variant != "baseline":
+            protocol["gemini_prompt_variant"] = args.gemini_prompt_variant
+            protocol["gemini_prompt_addition"] = GEMINI_PROMPT_VARIANTS[args.gemini_prompt_variant]
+            protocol["answer_prompt"] = "gemini-causal-window-v1-" + args.gemini_prompt_variant
+    if args.record_action_logits:
+        protocol["record_action_logits"] = True
     protocol_path = args.output_dir / "manifest.json"
     if protocol_path.is_file() and json.loads(protocol_path.read_text()) != protocol:
         raise ValueError("existing rollout protocol differs")
     if rank == 0:
-        protocol_path.write_text(json.dumps(protocol, indent=2, sort_keys=True) + "\n")
+        temporary_protocol_path = protocol_path.with_suffix(".json.tmp")
+        temporary_protocol_path.write_text(json.dumps(protocol, indent=2, sort_keys=True) + "\n")
+        temporary_protocol_path.replace(protocol_path)
     shard = args.output_dir / f"predictions.rank{rank:02d}.jsonl"
     completed = {row["question_id"] for row in read_jsonl(shard)} if shard.is_file() else set()
     assigned = [row for index, row in enumerate(rows) if index % world == rank
@@ -158,6 +245,8 @@ def main() -> None:
     )
     if args.answer_model == "promoted":
         runtime.model.load_adapter(contract["adapter"], adapter_name="generator", is_trainable=False)
+    provider = (VertexGeminiRuntime.load(model_name="gemini-3.8-flash", location="global")
+                if args.answer_model == "gemini-3.8-flash" else None)
     runtime.model.set_adapter("default")
     runtime.model.eval()
     head = PointerHead(int(runtime.model.config.text_config.hidden_size)).to(runtime.device)
@@ -166,6 +255,8 @@ def main() -> None:
     counts: Counter[str] = Counter()
     decision_seconds = 0.0
     generation_seconds = 0.0
+    action_trace: list[dict] = []
+    provider_trace: list[dict] = []
 
     def choose_turn(messages, *, max_new_tokens, vision=None):
         nonlocal decision_seconds, generation_seconds
@@ -179,6 +270,9 @@ def main() -> None:
         with torch.no_grad():
             logits = controller_logits(runtime, head, inputs, vision, options, decision,
                                        train_decoder=False)
+            if args.record_action_logits:
+                action_trace.append({"logits": [float(x) for x in logits.detach().cpu().tolist()],
+                                     "action": ACTIONS[int(logits.argmax().item())]})
             logits[ACTIONS.index("Response")] -= args.response_margin
             action = ACTIONS[int(logits.argmax().item())]
         decision_seconds += time.monotonic() - started
@@ -189,6 +283,39 @@ def main() -> None:
                 with runtime.model.disable_adapter():
                     content = base_answer(runtime, messages, vision,
                                           min(max_new_tokens, args.max_new_tokens))
+            elif provider is not None:
+                content = gemini_answer(provider, messages,
+                                        min(max_new_tokens, args.max_new_tokens),
+                                        args.gemini_prompt_variant)
+                call = provider.last_call
+                provider_trace.append({
+                    "status": call.get("status"),
+                    "attempts": call.get("attempts"),
+                    "errors": call.get("errors"),
+                    "elapsed_seconds": call.get("elapsed_seconds"),
+                    "model_version": (call.get("response") or {}).get("modelVersion"),
+                    "usage_metadata": (call.get("response") or {}).get("usageMetadata"),
+                })
+                if not content:
+                    if call.get("status") != 200:
+                        raise RuntimeError(f"Gemini generation failed: {call.get('errors')}")
+                    content = gemini_answer(provider, messages, 256,
+                                            args.gemini_prompt_variant)
+                    call = provider.last_call
+                    provider_trace.append({
+                        "status": call.get("status"),
+                        "attempts": call.get("attempts"),
+                        "errors": call.get("errors"),
+                        "elapsed_seconds": call.get("elapsed_seconds"),
+                        "model_version": (call.get("response") or {}).get("modelVersion"),
+                        "usage_metadata": (call.get("response") or {}).get("usageMetadata"),
+                        "empty_answer_retry": True,
+                    })
+                    if not content:
+                        if call.get("status") != 200:
+                            raise RuntimeError(f"Gemini retry failed: {call.get('errors')}")
+                        content = "I cannot determine the answer from the visible frames."
+                        provider_trace[-1]["explicit_unavailable_fallback"] = True
             else:
                 runtime.model.set_adapter("generator")
                 try:
@@ -206,6 +333,8 @@ def main() -> None:
     started = time.monotonic()
     with shard.open("a", encoding="utf-8") as handle:
         for index, row in enumerate(assigned, 1):
+            action_trace.clear()
+            provider_trace.clear()
             prior_counts = counts.copy()
             prior_decision_seconds = decision_seconds
             prior_generation_seconds = generation_seconds
@@ -232,6 +361,10 @@ def main() -> None:
             }
             result["jevany_decision_seconds"] = decision_seconds - prior_decision_seconds
             result["jevany_generation_seconds"] = generation_seconds - prior_generation_seconds
+            if provider is not None:
+                result["gemini_calls"] = list(provider_trace)
+            if args.record_action_logits:
+                result["jevany_action_trace"] = list(action_trace)
             if int(result.get("v24_parse", {}).get("malformed", 0)):
                 raise ValueError("malformed response emission")
             handle.write(json.dumps(result, sort_keys=True) + "\n")

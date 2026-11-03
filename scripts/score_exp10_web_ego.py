@@ -19,11 +19,13 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("benchmark", choices=("web", "ego"))
     p.add_argument("--pred-dir", type=Path, required=True)
+    p.add_argument("--expected-videos", type=int,
+                   help="Expected subset size; defaults to the complete benchmark")
     a = p.parse_args()
     summary = a.pred_dir / "pauc_f_summary-gpt-4.1-v1.json"
     if summary.is_file():
         result = json.loads(summary.read_text())
-        expected = 500 if a.benchmark == "web" else 326
+        expected = a.expected_videos or (500 if a.benchmark == "web" else 326)
         if result.get("num_videos") != expected:
             raise ValueError(f"incomplete existing {a.benchmark} score: {summary}")
         print(f"Complete {a.benchmark} GPT-4.1 score already exists: {summary}")
@@ -39,6 +41,10 @@ def main() -> None:
                     "--scores", str(a.pred_dir / "pauc_llm_scores-gpt-4.1.json"),
                     "--output", str(a.pred_dir / "pauc_f_summary-gpt-4.1-v1.json"),
                     "--omega", "0.5", "--judge-model", "gpt-4.1"], cwd=SG, check=True)
+    if a.expected_videos:
+        result = json.loads(summary.read_text())
+        if result.get("num_videos") != a.expected_videos:
+            raise ValueError(f"expected {a.expected_videos} scored videos, got {result.get('num_videos')}")
 
 
 if __name__ == "__main__":
