@@ -117,6 +117,8 @@ def main():
     parser.add_argument("--lora-lr", type=float, default=2e-6)
     parser.add_argument("--accumulation", type=int, default=4)
     parser.add_argument("--save-every", type=int, default=1000)
+    parser.add_argument("--stop-after-steps", type=int, default=0,
+                        help="Stop after a saved full-run checkpoint for a closed-loop gate")
     parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
@@ -219,6 +221,17 @@ def main():
                     save_checkpoint(args.output, runtime, head, optimizer, step=steps,
                                     seen=presentations, rank=rank, world=world,
                                     mode=args.mode, seed=args.seed)
+                if args.stop_after_steps and steps >= args.stop_after_steps:
+                    if args.stage != "full":
+                        raise ValueError("stop-after-steps requires a full run")
+                    if steps != 25 and steps % args.save_every != 0:
+                        save_checkpoint(args.output, runtime, head, optimizer, step=steps,
+                                        seen=presentations, rank=rank, world=world,
+                                        mode=args.mode, seed=args.seed)
+                    if rank == 0:
+                        print(json.dumps({"gate_checkpoint_step": steps,
+                                          "seen_per_rank": presentations}), flush=True)
+                    return
     if presentations % args.accumulation:
         sync_gradients(params, world)
         torch.nn.utils.clip_grad_norm_(params, 1.0)

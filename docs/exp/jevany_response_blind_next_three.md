@@ -1,9 +1,10 @@
 # Three training experiments after JevAny J1
 
-Date: 2026-10-25; J2 results added 2026-10-27; J1-S results added 2026-10-28; J1-S-R v2 results added 2026-11-02
+Date: 2026-10-25; J2 results added 2026-10-27; J1-S results added 2026-10-28; J1-S-R v2 and replay results added 2026-11-02
 
 Status: J2, J1-S, and J1-S-R v2 completed; J1-S remains the JevAny-family candidate;
-J2-S and J2-R remain unrun; J1-S-R v2 was not promoted
+J2-S and J2-R remain unrun; J1-S-R v2 and its source-tail replay were not promoted;
+v3 was stopped before a checkpoint
 
 ## Objective and evidence
 
@@ -475,3 +476,73 @@ semantically audit a sample of selected labels, and use a small closed-loop
 response-rate/coverage gate before committing to 8,243 steps. Keep a fresh
 PACE initialization and fixed budgets for the first ordering test; changing
 initialization, quota, or learning rate should be separate cells.
+
+### Checkpoint and exact-tail diagnosis (2026-11-02)
+
+The [checkpoint diagnosis](../../outputs/jevany-j1sr-v2/diagnostics/checkpoint_diagnosis.md)
+located the response collapse in the last 43 updates. On the same frozen 200
+videos, step 8,200 made 742 responses and covered 504/659 gold windows; final
+step 8,243 made one response and covered none. GPT-4.1 judged MarkII PAUC-F
+was 70.74 at step 8,200 versus 71.62 for J1-S, so the pre-tail checkpoint is
+a diagnostic, not a newly selected candidate.
+
+An exact replay resumed the step-8,200 optimizer and RNG state and replaced
+only the 640 appended mined rows with the 640 source rows removed for v2.
+The first 263,120 manifest rows had an identical SHA-256 prefix. On a fixed
+64-video subset, the replay made 173 responses, covered 150/241 windows, and
+scored 75.20 GPT-4.1 judged PAUC-F. J1-S scored 73.88 on those same 64 videos;
+the original mined-tail final checkpoint covered zero windows. This directly
+implicates the mined tail in the extreme silence, while leaving ordering,
+long-context distribution, and label quality as separate mechanisms. The
+replay covered fewer windows than J1-S and is not promoted.
+
+On a matched 16-video action-logit probe, all first divergences between step
+8,200 and the original final checkpoint were `Response` versus `Silence` on
+identical prior actions and answers. The median Response-minus-best-other
+logit margin fell by 17.4 at those decisions. The exact source-tail replay
+also suppressed the first pre-tail Response in 13/16 videos, but its median
+margin drop was 4.0. See the saved
+[logit comparison](../../outputs/jevany-j1sr-v2/diagnostics/logits/comparison.json).
+
+The [label spot check](../../outputs/jevany-j1sr-v2/diagnostics/label_audit.md)
+flagged one visually questionable mined positive. A fresh interleaved manifest
+contains exactly the same v2 presentations and class counts, with mined rows
+distributed across the source replacement positions. The next cell uses a
+step-1,000 closed-loop response/coverage safety gate before completing its
+matched 8,243-step budget.
+
+The v3 canary was started, then stopped at the user's request before a
+checkpoint or gate result so the source-tail replay could receive benchmark
+evaluation first. No v3 quality result is available.
+
+#### Source-tail replay benchmark result and EGO stop
+
+The frozen step-8,243 source-tail replay used zero response margin and the
+promoted answer generator. The complete 500-video WEB rollout and GPT-4.1
+judge used `pauc-f-v1` with `omega=0.5`, matching the earlier benchmark
+protocol. Its [judged score](../../outputs/jevany-j1sr-v2/diagnostics/source-tail-replay/evaluation/benchmarks/web/pauc_f_summary-gpt-4.1-v1.json)
+was **44.67 PAUC-F**, with 205 fires (0.410/video), 174 value-adding fires,
+31 wasted fires, 84.88% fire precision, and a 30.31 PAUC recall component.
+The [complete predictions](../../outputs/jevany-j1sr-v2/diagnostics/source-tail-replay/evaluation/benchmarks/web/predictions.jsonl)
+and judge outputs are saved with that summary.
+
+| WEB controller | Videos | Fires | Useful | Wasted | Judged PAUC-F |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Promoted PACE `long-neg` | 500 | 1,132 | 800 | 332 | 57.47 |
+| J1-S | 500 | 1,357 | 887 | 470 | 56.51 |
+| J1-S-R v2 final mined tail | 500 | 2 | 1 | 1 | 33.35 |
+| J1-S-R v2 source-tail replay | 500 | 205 | 174 | 31 | 44.67 |
+
+The replay improved on the near-silent mined-tail checkpoint by 11.32 points,
+but remained 11.84 below J1-S and 12.80 below promoted PACE. Its response
+rate was far below J1-S's 2.714 fires/video, explaining why high fire
+precision did not translate into competitive event coverage. The 75.20
+judged score on the first 64 frozen MarkII videos was a useful diagnosis of
+the tail failure, not a reliable estimate of full WEB performance. The
+replay is **not promoted**.
+
+At the user's request, the replay EGO rollout was stopped after 38/326
+videos had produced saved [partial rank traces](../../outputs/jevany-j1sr-v2/diagnostics/source-tail-replay/evaluation/benchmarks/ego/manifest.json).
+The launcher and all eight GPU workers exited. No merged EGO prediction file,
+GPT-4.1 judgment, or complete EGO score exists for this replay. Do not compare
+the partial traces numerically with full EGO results.
