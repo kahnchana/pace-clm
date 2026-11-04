@@ -61,7 +61,10 @@ original PACE-200 pilot results remain documented
 in [`agent_notes/experiments/pace200_clm_pilot.md`](agent_notes/experiments/pace200_clm_pilot.md);
 the full transfer result and its limits are in
 [`agent_notes/experiments/pace_clm_web_ego_full.md`](agent_notes/experiments/pace_clm_web_ego_full.md).
-No new Qwen LoRA training has been run in this project.
+Subsequent JevAny streaming and smaller Qwen3.5 controller experiments trained
+new LoRAs. The [2B WEB result](docs/exp/qwen35_2b_j1s_web.md) and
+[0.8B/4B size-sweep status](docs/exp/qwen35_dense_size_sweep_j1s_web.md)
+record the current follow-up work.
 
 ## Repository map
 

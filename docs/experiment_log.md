@@ -1,5 +1,16 @@
 # Experiment log
 
+## 2026-11-04 — smaller Qwen3.5 J1-S controllers
+
+- Completed the official 2B controller's matched one-epoch, seed-42 run:
+  263,760 training presentations, 8,243 updates, then all 500 WEB videos with
+  the frozen promoted 35B MoE answer generator. GPT-4.1 judged PAUC-F was
+  54.67 versus 56.51 for historical J1-S, with 991 versus 1,357 fires.
+  See [the full result](exp/qwen35_2b_j1s_web.md).
+- Passed the 0.8B and 4B preflight gates and started the size sweep. At
+  21:19 UTC, 0.8B training was still running and 4B full training had not
+  started; neither had WEB results. See the [size-sweep record](exp/qwen35_dense_size_sweep_j1s_web.md).
+
 ## 2026-09-27 — repository foundation
 
 - Created standalone Apache-2.0 repository.
