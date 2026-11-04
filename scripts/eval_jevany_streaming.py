@@ -31,6 +31,7 @@ from pace_clm.jevany_streaming import (
     response_blind_messages,
 )
 from pace_clm.stream_gemma_adapter import validate_promoted_contract
+from pace_clm.qwen_controller_runtime import MODEL_REVISIONS, load_dense_controller
 
 
 GEMINI_BASE_PROMPT = (
@@ -173,6 +174,9 @@ def main() -> None:
         controller_mode = torch.load(
             args.controller / "training_state.pt", map_location="cpu", weights_only=False
         )["mode"]
+    identity_path = args.controller / "model_identity.json"
+    identity = json.loads(identity_path.read_text()) if identity_path.is_file() else {}
+    separate_generator = identity.get("model_name") in MODEL_REVISIONS
     response_blind = controller_mode == "J2"
     if args.validation_manifest:
         rows = read_jsonl(args.validation_manifest)
@@ -216,6 +220,8 @@ def main() -> None:
         "memory_select": "aged-out", "prefix": "direct", "history": "self-generated",
         "question_ids": [row["question_id"] for row in rows],
         "controller_history": "response-blind" if response_blind else "j1-original",
+        "controller_model": identity or {"model_name": contract["model_name"],
+                                          "model_revision": contract["model_revision"]},
     }
     if args.answer_model == "gemini-3.8-flash":
         protocol["empty_answer_policy"] = "retry-with-256-visible-tokens-then-explicit-unavailable-v1"
@@ -238,12 +244,23 @@ def main() -> None:
                 and row["question_id"] not in completed]
     if not assigned:
         return
-    runtime = QwenRuntime.load(
-        checkpoint=str(args.controller / "controller_adapter"),
-        model_name=contract["model_name"], model_revision=contract["model_revision"],
-        frame_num_tokens=144, generation_prefix_mode="direct",
-    )
-    if args.answer_model == "promoted":
+    if separate_generator:
+        runtime, _ = load_dense_controller(
+            model_name=identity["model_name"], model_revision=identity["model_revision"],
+            checkpoint=str(args.controller / "controller_adapter"),
+        )
+    else:
+        runtime = QwenRuntime.load(
+            checkpoint=str(args.controller / "controller_adapter"),
+            model_name=contract["model_name"], model_revision=contract["model_revision"],
+            frame_num_tokens=144, generation_prefix_mode="direct",
+        )
+    generator = (QwenRuntime.load(
+        checkpoint=contract["adapter"], model_name=contract["model_name"],
+        model_revision=contract["model_revision"], frame_num_tokens=144,
+        generation_prefix_mode="direct",
+    ) if separate_generator and args.answer_model == "promoted" else runtime)
+    if args.answer_model == "promoted" and not separate_generator:
         runtime.model.load_adapter(contract["adapter"], adapter_name="generator", is_trainable=False)
     provider = (VertexGeminiRuntime.load(model_name="gemini-3.8-flash", location="global")
                 if args.answer_model == "gemini-3.8-flash" else None)
@@ -257,12 +274,14 @@ def main() -> None:
     generation_seconds = 0.0
     action_trace: list[dict] = []
     provider_trace: list[dict] = []
+    generator_frames: dict[int, tuple[object, object]] = {}
 
     def choose_turn(messages, *, max_new_tokens, vision=None):
         nonlocal decision_seconds, generation_seconds
         if vision is None:
             raise RuntimeError("vision cache is required")
-        runtime.model.set_adapter("default")
+        if not separate_generator:
+            runtime.model.set_adapter("default")
         started = time.monotonic()
         inputs, options, decision = decision_inputs(
             runtime, with_options(response_blind_messages(messages) if response_blind else messages), vision
@@ -317,12 +336,26 @@ def main() -> None:
                         content = "I cannot determine the answer from the visible frames."
                         provider_trace[-1]["explicit_unavailable_fallback"] = True
             else:
-                runtime.model.set_adapter("generator")
-                try:
-                    content = forced_response(runtime, messages, vision,
+                if separate_generator:
+                    images = [part["image"] for message in messages
+                              for part in message["content"] if part.get("type") == "image"]
+                    missing_images = [image for image in images if id(image) not in generator_frames]
+                    if missing_images:
+                        prepared_frames = [generator.encode_frame(image)
+                                           for image in generator._resize(missing_images)]
+                        generator.encode_frames_features(prepared_frames)
+                        generator_frames.update((id(image), (image, frame))
+                                                for image, frame in zip(missing_images, prepared_frames, strict=True))
+                    generator_vision = [generator_frames[id(image)][1] for image in images]
+                    content = forced_response(generator, messages, generator_vision,
                                               min(max_new_tokens, args.max_new_tokens))
-                finally:
-                    runtime.model.set_adapter("default")
+                else:
+                    runtime.model.set_adapter("generator")
+                    try:
+                        content = forced_response(runtime, messages, vision,
+                                                  min(max_new_tokens, args.max_new_tokens))
+                    finally:
+                        runtime.model.set_adapter("default")
             generation_seconds += time.monotonic() - started
             if not content or not content.strip():
                 raise ValueError(f"empty response from {args.answer_model} answer model")
@@ -335,6 +368,7 @@ def main() -> None:
         for index, row in enumerate(assigned, 1):
             action_trace.clear()
             provider_trace.clear()
+            generator_frames.clear()
             prior_counts = counts.copy()
             prior_decision_seconds = decision_seconds
             prior_generation_seconds = generation_seconds
@@ -361,6 +395,7 @@ def main() -> None:
             }
             result["jevany_decision_seconds"] = decision_seconds - prior_decision_seconds
             result["jevany_generation_seconds"] = generation_seconds - prior_generation_seconds
+            result["jevany_peak_gpu_memory_gib"] = torch.cuda.max_memory_allocated(runtime.device) / 1024**3
             if provider is not None:
                 result["gemini_calls"] = list(provider_trace)
             if args.record_action_logits:
