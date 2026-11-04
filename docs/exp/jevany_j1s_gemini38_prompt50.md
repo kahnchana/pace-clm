@@ -1,9 +1,9 @@
 # Gemini 3.8 Flash answer-prompt check on 50 EGO videos
 
-Date: 2026-11-03. Status: four two-GPU rollouts restarted after Vertex
-authentication was refreshed; GPT-4.1 judging is waiting for generation.
-The frozen cohort and baseline scores are complete. The first attempt stopped
-at the first Gemini call without saving a video.
+Date: 2026-11-03; results completed 2026-11-04. Status: all four two-GPU
+rollouts and GPT-4.1 judgments complete. The first attempt stopped at the
+first Gemini call when Vertex authentication expired, without saving a video;
+the successful run followed a refreshed login.
 
 ## Purpose and cohort
 
@@ -61,4 +61,27 @@ responses. The final matched comparison will be saved as
 
 ## Results
 
-Judging is pending.
+| Selector + generator prompt | P | R | PAUC-F | Fires | Useful | Wasted | Fires/video |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| J1-S + promoted Qwen | 40.62% | 53.66 | 46.24 | 389 | 158 | 231 | 7.78 |
+| J1-S + Gemini baseline | 31.59% | 53.61 | 39.75 | 478 | 151 | 327 | 9.56 |
+| Event boundary | 21.75% | 55.94 | 31.32 | 777 | 169 | 608 | 15.54 |
+| No premature absence | 11.28% | 52.69 | 18.58 | 1,365 | 154 | 1,211 | 27.30 |
+| Stable action words | 16.63% | 52.04 | 25.21 | 974 | 162 | 812 | 19.48 |
+| Current event only | 25.97% | 55.18 | 35.32 | 620 | 161 | 459 | 12.40 |
+
+All four variants fired more often and scored below the Gemini baseline on
+these same 50 videos. `current_event_only` was best among the new prompts at
+35.32 PAUC-F, still 4.44 points below the original Gemini prompt and 10.92
+below J1-S with promoted Qwen answers. `no_premature_absence` was worst:
+1,365 fires, of which 1,211 were wasted. The judged PAUC recall component
+did not compensate for the precision losses. All recorded Gemini API calls
+returned HTTP 200, with no explicit unavailable fallbacks in the four new
+rollouts.
+
+**Decision:** None of these prompt-only variants is a candidate for full
+EGO/WEB confirmation. The small diagnostic cohort has already informed
+prompt design and is not an untouched selection set. These results suggest
+that J1-S's response feedback is sensitive to generator wording in ways the
+four instructions did not repair; they do not rule out a different prompt or
+response-blind controller design.
