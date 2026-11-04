@@ -50,8 +50,15 @@ def make_args() -> SimpleNamespace:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, default=ROOT / "outputs/jevany/manifests/train.jsonl")
+    parser.add_argument("--video-sample-stride", type=int, default=10)
+    parser.add_argument("--target-episode-count", type=int, default=26080)
     args = parser.parse_args()
-    specs, report = build_episode_specs(make_args())
+    if args.video_sample_stride < 1 or args.target_episode_count < 0:
+        parser.error("stride must be positive and episode count must be nonnegative")
+    build_args = make_args()
+    build_args.video_sample_stride = args.video_sample_stride
+    build_args.target_episode_count = args.target_episode_count
+    specs, report = build_episode_specs(build_args)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     counts = Counter()
     with args.output.open("w", encoding="utf-8") as handle:
@@ -77,13 +84,17 @@ def main() -> None:
                 }
                 handle.write(json.dumps(row, sort_keys=True) + "\n")
     expected = {"Response": 41220, "Silence": 215502, "Hold": 7038}
-    if dict(counts) != expected or len(specs) != 26080:
+    if (args.video_sample_stride, args.target_episode_count) == (10, 26080) and (
+        dict(counts) != expected or len(specs) != 26080
+    ):
         raise RuntimeError(f"PACE exposure drift: {len(specs)} episodes, {dict(counts)} decisions")
     summary = {
         "episodes": len(specs), "decisions": sum(counts.values()),
+        "video_sample_stride": args.video_sample_stride,
+        "target_episode_count": args.target_episode_count,
         "labels": dict(counts), "manifest_sha256": sha256(args.output),
-        "annotation_sha256": sha256(Path(make_args().annotation_path)),
-        "metadata_sha256": sha256(Path(make_args().metadata_path)),
+        "annotation_sha256": sha256(Path(build_args.annotation_path)),
+        "metadata_sha256": sha256(Path(build_args.metadata_path)),
         "source_report": report,
     }
     args.output.with_suffix(".summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
