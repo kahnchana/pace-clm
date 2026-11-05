@@ -29,8 +29,8 @@ Fewer fires alone did not produce better useful-response coverage.
 
 Read before implementation:
 
-- `docs/design.md`
-- `docs/experiment_log.md`
+- `docs/reference/design.md`
+- `docs/experiments/experiment_log.md`
 - `agent_notes/experiments/status.md`
 - `agent_notes/experiments/pace_clm_10pct_mixture_plan.md`
 - `agent_notes/experiments/pace_clm_web_ego_full.md`
@@ -306,8 +306,8 @@ The server implementation agent should:
    resolved paths. Repair implementation failures before pilot training.
 5. Launch the staged pilot, full 10% study, validation freeze, and selected
    benchmark suite in the order above within the available allocation/budget.
-6. Update `docs/design.md` with implemented contracts and
-   `docs/experiment_log.md` only with completed checks/results. This plan
+6. Update `docs/reference/design.md` with implemented contracts and
+   `docs/experiments/experiment_log.md` only with completed checks/results. This plan
    supersedes frozen-head-only scope for the new named experiment; retain the
    historical experiment configurations and conclusions.
 

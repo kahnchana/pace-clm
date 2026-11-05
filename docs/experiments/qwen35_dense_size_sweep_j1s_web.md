@@ -1,6 +1,6 @@
 # Qwen3.5 dense-controller size sweep: 0.8B and 4B J1-S on WEB
 
-Date: 2026-11-04. Repeat the completed [2B J1-S experiment](../qwen35_2b_j1s_web_plan.md)
+Date: 2026-11-04. Repeat the completed [2B J1-S experiment](../plans/qwen35_2b_j1s_web_plan.md)
 on the same eight-H200 node, once each with official post-trained
 `Qwen/Qwen3.5-0.8B` and `Qwen/Qwen3.5-4B` controller checkpoints. Both use the
 same frozen promoted `Qwen/Qwen3.5-35B-A3B` answer generator and the final

@@ -49,7 +49,7 @@ reporting without another routine confirmation.
 Adapt the existing trainer/evaluator with explicit model identity in checkpoint
 metadata. Use a new output root, `outputs/jevany-qwen35-2b-j1s/`; preserve old
 artifacts. Reference `configs/jevany_streaming.yaml` and
-`docs/exp/jevany_response_blind_next_three.md` (J1-S completed result).
+`docs/experiments/jevany_response_blind_next_three.md` (J1-S completed result).
 
 The current evaluator loads controller and generator adapters onto one MoE
 backbone. **That cannot work across 2B and 35B.** Load separate runtimes:

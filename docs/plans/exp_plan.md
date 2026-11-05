@@ -2,7 +2,7 @@
 
 Status: planned, not launched. This plan uses one eight-H200 node and at most ten
 head-training runs. It follows the judged WEB/EGO result in
-[`../agent_notes/experiments/pace_clm_web_ego_full.md`](../agent_notes/experiments/pace_clm_web_ego_full.md).
+[`../agent_notes/experiments/pace_clm_web_ego_full.md`](../../agent_notes/experiments/pace_clm_web_ego_full.md).
 
 ## Objective and reason for the design
 

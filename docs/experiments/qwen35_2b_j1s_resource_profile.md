@@ -1,7 +1,7 @@
 # Qwen3.5-2B J1-S: eight-H200 training resource profile
 
 Date: 2026-11-04. This is a live profile of the full seed-42 training run from
-[`qwen35_2b_j1s_web_plan.md`](../qwen35_2b_j1s_web_plan.md). It informs **future**
+[`qwen35_2b_j1s_web_plan.md`](../plans/qwen35_2b_j1s_web_plan.md). It informs **future**
 runs; the current matched experiment retains one example per GPU, accumulation
 4, and effective global batch 32.
 

@@ -428,7 +428,7 @@ head.” It is:
 
 ## Implementation notes for future agents
 
-- Read `docs/design.md`, `docs/experiment_log.md`, and
+- Read `docs/reference/design.md`, `docs/experiments/experiment_log.md`, and
   `agent_notes/experiments/status.md` before changing code.
 - Preserve `configs/actions_v1.yaml` and completed outputs as the immutable
   three-action baseline.

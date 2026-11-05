@@ -50,7 +50,7 @@ controller used `response_margin=0.0`; no margin was chosen on WEB or EGO.
 ## Scope and interpretation for agents
 
 This is the completed **J1** cell from the proposed [experiment
-plan](../jevany_streaming_experiment_plan.md). We deliberately simplified that
+plan](../plans/jevany_streaming_experiment_plan.md). We deliberately simplified that
 plan to one seed, a tiny matched J0/J1 overfit pilot, one full J1 run, and the
 full WEB/EGO evaluations. J0 did **not** get a matched full run. B0 (promoted
 PACE) and B1 (frozen run-5 MLP) are **historical full-split references**, not

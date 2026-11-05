@@ -1,6 +1,6 @@
 # Qwen3.5-2B J1-S controller: full WEB result
 
-Date: 2026-11-04. The [matched-run plan](../qwen35_2b_j1s_web_plan.md)
+Date: 2026-11-04. The [matched-run plan](../plans/qwen35_2b_j1s_web_plan.md)
 was completed with seed 42 and the final one-epoch checkpoint at step 8,243.
 The controller started from official post-trained `Qwen/Qwen3.5-2B` revision
 `15852e8c16360a2fea060d615a32b45270f8a8fc`, with a fresh LoRA and

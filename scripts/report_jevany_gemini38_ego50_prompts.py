@@ -54,7 +54,7 @@ def main() -> None:
     ]
     comparison = "\n".join(lines)
     (OUT / "comparison.md").write_text(comparison)
-    note = ROOT / "docs/exp/jevany_j1s_gemini38_prompt50.md"
+    note = ROOT / "docs/experiments/jevany_j1s_gemini38_prompt50.md"
     current = note.read_text()
     marker = "## Results\n\n"
     if marker not in current:

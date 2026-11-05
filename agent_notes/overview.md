@@ -6,9 +6,9 @@ these checked-in notes over chat history.
 ## How to use
 
 - Keep verified architecture and source-contract decisions in
-  [`../docs/design.md`](../docs/design.md).
-- Update [`../docs/experiment_log.md`](../docs/experiment_log.md) only when a
-  check, experiment, or decision is complete.
+  [`../docs/reference/design.md`](../docs/reference/design.md).
+- Update [`../docs/experiments/experiment_log.md`](../docs/experiments/experiment_log.md)
+  only when a check, experiment, or decision is complete.
 - Keep the implementation sequence and acceptance criteria in
   [`todo.md`](todo.md) accurate as milestones land.
 - Store deterministic data selections under [`../manifests/`](../manifests/).
@@ -21,9 +21,9 @@ these checked-in notes over chat history.
 | --- | --- |
 | [`todo.md`](todo.md) | Full MVP handoff, execution order, evaluation protocol, and completion criteria |
 | [`../README.md`](../README.md) | User-facing project status, pinned contract, and repository map |
-| [`../docs/design.md`](../docs/design.md) | Promoted PACE-Qwen audit, integration boundary, label semantics, feature contract, and attribution |
-| [`../docs/experiment_log.md`](../docs/experiment_log.md) | Chronological record of completed and verified work |
-| [`../docs/exp_plan.md`](../docs/exp_plan.md) | Ten-run, one-node follow-up experiment plan |
+| [`../docs/reference/design.md`](../docs/reference/design.md) | Promoted PACE-Qwen audit, integration boundary, label semantics, feature contract, and attribution |
+| [`../docs/experiments/experiment_log.md`](../docs/experiments/experiment_log.md) | Chronological record of completed and verified work |
+| [`../docs/plans/exp_plan.md`](../docs/plans/exp_plan.md) | Ten-run, one-node follow-up experiment plan |
 | [`../configs/qwen_mvp.yaml`](../configs/qwen_mvp.yaml) | Pinned model, adapter hash, streaming protocol, projection architecture, and seed |
 | [`../configs/actions_v1.yaml`](../configs/actions_v1.yaml) | Exact versioned action descriptions used for action features |
 | [`../manifests/README.md`](../manifests/README.md) | Manifest policy and WEB/EGO pilot guardrail |

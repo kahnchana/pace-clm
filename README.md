@@ -18,7 +18,7 @@ small, tested integration boundary and does not fork benchmark behavior.
 - Qwen generation prefix: `direct`
 - Paper-facing state map: `Standby -> Hold`
 
-See [docs/design.md](docs/design.md) for evidence and source locations.
+See [docs/reference/design.md](docs/reference/design.md) for evidence and source locations.
 
 ## Current status
 
@@ -62,8 +62,8 @@ in [`agent_notes/experiments/pace200_clm_pilot.md`](agent_notes/experiments/pace
 the full transfer result and its limits are in
 [`agent_notes/experiments/pace_clm_web_ego_full.md`](agent_notes/experiments/pace_clm_web_ego_full.md).
 Subsequent JevAny streaming and smaller Qwen3.5 controller experiments trained
-new LoRAs. The [2B WEB result](docs/exp/qwen35_2b_j1s_web.md) and
-[0.8B/4B size-sweep status](docs/exp/qwen35_dense_size_sweep_j1s_web.md)
+new LoRAs. The [2B WEB result](docs/experiments/qwen35_2b_j1s_web.md) and
+[0.8B/4B size-sweep status](docs/experiments/qwen35_dense_size_sweep_j1s_web.md)
 record the current follow-up work.
 
 ## Repository map
@@ -74,9 +74,10 @@ record the current follow-up work.
 | [`src/pace_clm/`](src/pace_clm/) | Feature extraction, pooling, heads, labels, and Stream-Gemma boundary |
 | [`tests/`](tests/) | CPU contract and gradient tests |
 | [`scripts/`](scripts/) | Guarded execution entry points |
-| [`docs/design.md`](docs/design.md) | Source audit, design decisions, and attribution |
-| [`docs/experiment_log.md`](docs/experiment_log.md) | Chronological verified work log |
-| [`docs/exp_plan.md`](docs/exp_plan.md) | Ten-run, one-node follow-up experiment plan |
+| [`docs/README.md`](docs/README.md) | Documentation index |
+| [`docs/reference/design.md`](docs/reference/design.md) | Source audit, design decisions, and attribution |
+| [`docs/experiments/experiment_log.md`](docs/experiments/experiment_log.md) | Chronological verified work log |
+| [`docs/plans/exp_plan.md`](docs/plans/exp_plan.md) | Ten-run, one-node follow-up experiment plan |
 | [`agent_notes/overview.md`](agent_notes/overview.md) | Project status and documentation index |
 | [`agent_notes/todo.md`](agent_notes/todo.md) | Full implementation handoff and execution order |
 | [`manifests/`](manifests/) | Deterministic train/dev/test manifests and selection metadata |
