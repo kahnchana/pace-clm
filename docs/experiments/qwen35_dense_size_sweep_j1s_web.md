@@ -55,13 +55,44 @@ The full pipeline started on the current eight-GPU allocation
 (Slurm 38226) at 15:20 UTC. A completion-marker watcher launches 4B training
 when 0.8B training finishes, while the first pipeline proceeds to 0.8B WEB
 evaluation. Per-size file locks prevent duplicate runs. Same-node Slurm job
-38381 is queued as a
-checkpoint-resuming fallback if that allocation ends. Each size records
+38381 was queued as a checkpoint-resuming fallback and canceled after both
+results completed. Each size records
 30-second GPU utilization and memory samples in `logs/gpu_samples.csv` for
 batch-size planning after the run. The matched run retains microbatch 1 and
 accumulation 4.
 
-At 21:19 UTC, the 0.8B training log had reached step 7,350 of 8,243; its
-latest saved checkpoint was step 7,300. The 4B full run had not started.
-Neither size had a WEB result yet. This is a snapshot of the ongoing run, not
-an outcome or a checkpoint selection.
+## 0.8B result and overlap profile (2026-11-05 00:16 UTC)
+
+The 0.8B model completed 8,243 updates and all 500 WEB videos. Its judged
+PAUC-F is **50.1244** (precision 74.80%, PAUC recall 37.69; 623 fires, 466
+useful, 157 wasted). This is 4.54 points below the matched 2B controller and
+6.39 below historical J1-S. The full result is in
+`outputs/jevany-qwen35-0p8b-j1s/reports/web_result.md`.
+
+The 4B training run launched at 2026-11-04 21:57:52 UTC while 0.8B WEB
+evaluation was active. In its 30-second samples between 21:58 and 22:23:30,
+mean GPU compute utilization across the eight GPUs was 34.8%, mean memory used
+was 66,619 MiB, and maximum sampled memory was 95,790 MiB. In the later
+4B-only window through 00:15 UTC, mean utilization was 27.4% and maximum
+sampled memory was 19,186 MiB. These are utilization samples from all GPUs,
+including generator loading and uneven per-video work; they do not isolate
+training throughput. The concurrent peak remained below the H200 capacity of
+143,771 MiB per GPU.
+
+## Final result (2026-11-05)
+
+Both new controllers completed one epoch and judged all 500 WEB videos with
+the same frozen promoted generator. The combined report is
+`outputs/jevany-qwen35-size-sweep-j1s/reports/web_comparison.md`.
+
+| Controller | PAUC | PAUC-F | Fire precision | Fires | Useful | Wasted |
+|---|---:|---:|---:|---:|---:|---:|
+| 0.8B | 37.69 | 50.12 | 74.80% | 623 | 466 | 157 |
+| 2B | 44.54 | 54.67 | 70.74% | 991 | 701 | 290 |
+| 4B | 46.73 | 53.78 | 63.32% | 1,216 | 770 | 446 |
+
+The 4B controller has 2.19 points higher raw PAUC than 2B, but 0.89 points
+lower PAUC-F because its higher fire rate reduces precision. A paired
+1,000-replicate WEB bootstrap for 4B minus 2B PAUC-F gives a 95% interval of
+[-2.49, +0.67] points. The 0.8B minus 2B interval is [-6.03, -2.89]. Thus the
+observed 4B PAUC-F difference is not resolved by this 500-video sample.

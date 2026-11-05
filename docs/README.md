@@ -9,8 +9,10 @@ model contract. Documents here are grouped by purpose:
 | [Plans](plans/) | Proposed experiments and follow-up work |
 | [Experiments](experiments/) | Completed results, analyses, resource measurements, and the chronological [experiment log](experiments/experiment_log.md) |
 
-The [provisional Qwen3.5-2B full-data training procedure](reference/qwen35_2b_full_data_training.md)
-records the tested node setup and checks for future runs.
+The [GPU optimizations](reference/gpu_optimizations.md) page summarizes the
+Qwen3.5-2B training changes and links to their experiment reports.
+The [consolidated 2B full-data findings](experiments/qwen35_2b_full_data_findings.md)
+cover the GPU measurements, stopped training run, and WEB checkpoint results.
 
 The [2B J1-S WEB result](experiments/qwen35_2b_j1s_web.md) and
 [Qwen3.5 size sweep](experiments/qwen35_dense_size_sweep_j1s_web.md) cover the
