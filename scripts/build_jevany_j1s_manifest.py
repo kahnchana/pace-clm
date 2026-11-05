@@ -37,7 +37,9 @@ def main():
         original.append(row)
         final_episode[row["episode_id"]] = row
         source_positions.add(key(row))
-    assert len(original) == 263760
+    if not original:
+        raise ValueError("source manifest is empty")
+    original_labels = Counter(row["label"] for row in original)
     max_frame = defaultdict(int)
     for row in final_episode.values():
         max_frame[row["video_id"]] = max(max_frame[row["video_id"]], row["turns"][-1]["frame_index"])
@@ -109,11 +111,12 @@ def main():
     if len(easy) < removals_needed:
         raise ValueError("insufficient easy negatives")
     removed_silence = {(r["episode_id"], r["turn_index"]) for r in easy[:removals_needed]}
-    keep = [r for r in original if (r["episode_id"], r["turn_index"]) not in ambiguous_hold | removed_silence]
+    removed_positions = ambiguous_hold | removed_silence
+    keep = [r for r in original if (r["episode_id"], r["turn_index"]) not in removed_positions]
     result = keep + new_hold + new_silence
     result.sort(key=lambda r: (r["episode_id"], r["turn_index"]))
     labels = Counter(r["label"] for r in result)
-    assert len(result) == len(original) and labels["Response"] == 41220
+    assert len(result) == len(original) and labels["Response"] == original_labels["Response"]
     assert all(r["turns"][-1]["frame_index"] == r["frame_index"] for r in result)
     a.output.parent.mkdir(parents=True, exist_ok=True)
     with a.output.open("w") as f:
@@ -121,7 +124,7 @@ def main():
             f.write(json.dumps(row, sort_keys=True) + "\n")
     summary = {
         "seed": a.seed, "source_sha256": digest(a.source), "manifest_sha256": digest(a.output),
-        "presentations": len(result), "labels": dict(labels),
+        "presentations": len(result), "source_labels": dict(original_labels), "labels": dict(labels),
         "new_hold": len(new_hold), "new_post_response_silence": len(new_silence),
         "excluded_ambiguous_memory_only_hold": len(ambiguous_hold),
         "removed_easy_silence": len(removed_silence),

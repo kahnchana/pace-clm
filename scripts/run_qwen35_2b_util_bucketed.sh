@@ -8,7 +8,7 @@ export HF_HUB_OFFLINE=1 TOKENIZERS_PARALLELISM=false OMP_NUM_THREADS=1
 export PYTHONPATH="$ROOT/outputs/jevany/deps032:$ROOT/src:$ROOT/scripts:$ROOT/../stream-gemma/src:$ROOT/../stream-gemma"
 export TRITON_CACHE_DIR=/dev/shm/pace-qwen35-2b-util-triton
 export TMPDIR=/dev/shm/pace-qwen35-2b-util-tmp
-for batch in 8 16 32; do
+for batch in 32 16 8; do
   if [[ ! -f "$OUT/reports/nccl_b${batch}_throughput.json" ]]; then
     echo "SKIP batch=$batch: ordered run did not complete"
     continue

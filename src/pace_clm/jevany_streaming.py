@@ -127,7 +127,8 @@ def _render_with_expanded_images(runtime, messages: list[dict], vision: list) ->
     )
 
 
-def decision_inputs(runtime, messages: list[dict], vision: list) -> tuple[dict, list[int], int]:
+def decision_inputs(runtime, messages: list[dict], vision: list, *,
+                    device=None) -> tuple[dict, list[int], int]:
     from stream_gemma.inference.qwen_adapters import remove_empty_think_generation_suffix
 
     rendered = _render_with_expanded_images(runtime, messages, vision)
@@ -157,7 +158,8 @@ def decision_inputs(runtime, messages: list[dict], vision: list) -> tuple[dict, 
         raise ValueError("decision marker was removed with generation suffix")
     if any(pos >= decision_position for pos in candidate_positions):
         raise ValueError("candidate is not causal to decision marker")
-    return ({key: value.to(runtime.device) if hasattr(value, "to") else value
+    target = runtime.device if device is None else device
+    return ({key: value.to(target) if hasattr(value, "to") else value
              for key, value in inputs.items()}, candidate_positions, decision_position)
 
 

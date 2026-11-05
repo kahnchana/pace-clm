@@ -10,7 +10,7 @@ import os
 import random
 import sys
 import time
-from collections import Counter
+from collections import Counter, OrderedDict
 from pathlib import Path
 
 import torch
@@ -51,39 +51,59 @@ def row_stream(path: Path, rank: int, world: int):
 
 
 class EpisodeFrames:
-    def __init__(self, runtime, *, response_blind: bool):
+    def __init__(self, runtime, *, response_blind: bool, cache_frames: int = 0,
+                 defer_vision: bool = False):
         self.runtime = runtime
         self.response_blind = response_blind
+        if cache_frames < 0:
+            raise ValueError("cache_frames must be nonnegative")
+        self.cache_frames = cache_frames
+        self.defer_vision = defer_vision
         self.episode_id = None
-        self.frames = {}
+        self.frames = OrderedDict()
 
-    def prepare(self, row: dict, timings: dict[str, float] | None = None):
+    def prepare(self, row: dict, timings: dict[str, float] | None = None,
+                prefetched: dict | None = None, *, cpu_only: bool = False):
         def mark(name: str, start: float):
             if timings is not None:
                 torch.cuda.synchronize(self.runtime.device)
                 timings[name] = timings.get(name, 0.0) + time.perf_counter() - start
 
-        if row["episode_id"] != self.episode_id:
+        if not self.cache_frames and row["episode_id"] != self.episode_id:
             self.episode_id = row["episode_id"]
-            self.frames = {}
+            self.frames = OrderedDict()
         indices = [int(turn["frame_index"]) for turn in row["turns"]]
-        missing = [index for index in indices if index not in self.frames]
+        keys = [(row["video_path"], index) if self.cache_frames else index for index in indices]
+        missing = [index for index, key in zip(indices, keys) if key not in self.frames]
         if missing:
             start = time.perf_counter()
-            images = self.runtime._resize(decode_indices(row["video_path"], missing))
+            path = row["video_path"]
+            if prefetched is not None and all((path, index) in prefetched for index in missing):
+                images = [prefetched[path, index] for index in missing]
+            else:
+                images = self.runtime._resize(decode_indices(path, missing))
             mark("decode_resize", start)
             start = time.perf_counter()
             frames = [self.runtime.encode_frame(image) for image in images]
             mark("image_prepare", start)
             start = time.perf_counter()
-            self.runtime.encode_frames_features(frames)
+            if not self.defer_vision and not cpu_only:
+                self.runtime.encode_frames_features(frames)
             mark("vision_encode", start)
-            self.frames.update(zip(missing, zip(images, frames, strict=True), strict=True))
+            for index, pair in zip(missing, zip(images, frames, strict=True), strict=True):
+                key = (row["video_path"], index) if self.cache_frames else index
+                self.frames[key] = pair
         start = time.perf_counter()
-        images = [self.frames[index][0] for index in indices]
-        vision = [self.frames[index][1] for index in indices]
+        images = [self.frames[key][0] for key in keys]
+        vision = [self.frames[key][1] for key in keys]
+        if self.cache_frames:
+            for key in keys:
+                self.frames.move_to_end(key)
+            while len(self.frames) > self.cache_frames:
+                self.frames.popitem(last=False)
         messages = decision_messages(row, images, response_blind=self.response_blind)
-        inputs, options, decision = decision_inputs(self.runtime, messages, vision)
+        inputs, options, decision = decision_inputs(
+            self.runtime, messages, vision, device="cpu" if cpu_only else None)
         if int((inputs["input_ids"] == self.runtime.processor.image_token_id).sum()) != 144 * len(indices):
             raise ValueError("visual slot admission failure")
         mark("input_assembly", start)
