@@ -168,9 +168,9 @@ def main() -> None:
     if not controller_adapter.is_file() or not pointer_path.is_file():
         raise FileNotFoundError("controller checkpoint is incomplete")
     summary_path = args.controller.parent / "summary.rank0.json"
-    if summary_path.is_file():
-        controller_mode = json.loads(summary_path.read_text())["mode"]
-    else:
+    summary = json.loads(summary_path.read_text()) if summary_path.is_file() else {}
+    controller_mode = summary.get("mode")
+    if controller_mode is None:
         controller_mode = torch.load(
             args.controller / "training_state.pt", map_location="cpu", weights_only=False
         )["mode"]

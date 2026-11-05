@@ -74,14 +74,14 @@ def main() -> None:
     lines = [
         "# Qwen3.5 dense J1-S controller size sweep: WEB", "",
         "All three controllers trained on the same 263,760 J1-S presentations, seed 42, one epoch, with the same LoRA, pointer head, input window, and global batch 32. Each uses the same frozen promoted Qwen3.5-35B-A3B generator for answers. All 500 WEB IDs were judged with GPT-4.1 and `pauc-f-v1` at omega 0.5.", "",
-        "| Controller | PAUC-F | Precision | Recall | Fires | Useful | Wasted | Fires/video | Decision s/decision | Train h |",
+        "| Controller | PAUC | PAUC-F | Precision | Fires | Useful | Wasted | Fires/video | Decision s/decision | Train h |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for size, item in results.items():
         score = item["score"]
         lines.append(
-            f"| {LABELS[size]} | {score['pauc_f']:.2f} | {score['fire_precision']:.2f}% | "
-            f"{score['pauc_recall_component']:.2f} | {score['num_fires']} | "
+            f"| {LABELS[size]} | {score['pauc_recall_component']:.2f} | {score['pauc_f']:.2f} | "
+            f"{score['fire_precision']:.2f}% | {score['num_fires']} | "
             f"{score['num_value_adding_fires']} | {score['num_wasted_fires']} | "
             f"{item['fires_per_video']:.3f} | {item['decision_seconds_per_decision']:.3f} | "
             f"{(item.get('train_wall_seconds_including_resumes') or item['train_seconds']) / 3600:.2f} |"
