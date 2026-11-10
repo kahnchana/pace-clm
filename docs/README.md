@@ -42,8 +42,8 @@ reward from PAUC-F and RLOO from standard GRPO.
 The [RL implementation plan](plans/jevany_2b_rl_eight_h200_plan.md) retains the
 profiling and execution history.
 
-Reward-aligned RLOO later stopped at round 16 for lost useful coverage;
-its full-WEB PAUC-F was 54.5561 versus SFT at 54.6651.
+Reward-aligned RLOO and fixed GRPO both stopped at round 16 for lost useful
+coverage; their full-WEB PAUC-F scores were 54.5561 and 53.7149 respectively.
 
 Put stable implementation contracts in `reference/`, proposed work in
 `plans/`, and observed results in `experiments/`. Record a document's date and

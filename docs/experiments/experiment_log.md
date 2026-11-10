@@ -199,8 +199,15 @@
   diagnostics, runtime scope, limitations, proposed comparisons and artifact
   links. No follow-up run is launched by documenting these results.
 
-### 2026-11-09: Reward-aligned RLOO completed
+### 2026-11-09: E2 comparison and E3 supervised-anchor RLOO launch
 
-- Reward-aligned RLOO stopped at round 16 for useful-response coverage below
-  90% of SFT at consecutive checks. Full 500-video GPT-4.1 WEB: 54.5561
-  PAUC-F, 605 useful / 187 wasted versus retained SFT 54.6651, 701 / 290.
+- Reward-aligned RLOO and fixed GRPO v2 completed 16 collection rounds each,
+  stopping for useful-response coverage below 90% of SFT at consecutive checks.
+  Full 500-video GPT-4.1 WEB at round 16: RLOO 54.5561 PAUC-F, 605 useful /
+  187 wasted; GRPO 53.7149, 577 / 191; retained SFT 54.6651, 701 / 290.
+  Neither improved full-WEB PAUC-F. GRPO v1's failed input-replay gate remains
+  preserved separately; v2 passed exact initial ratios and restore checks.
+- The training-only coverage audit found reward inversions in about 4% of
+  pairs differing in useful-response count, useful actions inheriting negative
+  trajectory advantages, and about 20–22% of events missed by all four rollouts.
+  Score-function diagnostics do not establish parameter-gradient causality.
