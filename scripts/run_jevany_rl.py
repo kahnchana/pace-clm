@@ -108,9 +108,17 @@ def main():
     p.add_argument('--parity-mean-kl-tolerance',type=float,default=1e-5)
     p.add_argument('--selected-logp-tolerance',type=float,default=.05)
     p.add_argument('--resume', action='store_true')
+    p.add_argument('--reward-version', choices=('proxy-v1', 'pauc-f-aligned-gpt-v1'), default='proxy-v1')
+    p.add_argument('--reward-audit', type=Path, default=ROOT/'outputs/jevany-2b-rl/reward-audit-v1')
     p.add_argument('--tune-replay', action='store_true',
                    help='Benchmark real-row chunk sizes within the fixed physical shape, without optimizer steps')
     a = p.parse_args()
+    if a.reward_version != 'proxy-v1':
+        from jevany_rl_reward import contract
+        if json.loads((a.reward_audit/'reward-spec.json').read_text()) != contract():
+            raise ValueError('reward contract differs from audited specification')
+        if not json.loads((a.reward_audit/'summary.json').read_text())['gate_passed']:
+            raise ValueError('reward audit must pass before training')
     if not 1 <= a.updates <= (4096 if a.full_run else 16) or a.rollouts < 2 or a.starts < 1:
         p.error('invalid bounded profiling budget')
     if a.starts*a.rollouts < a.learners:
@@ -161,6 +169,14 @@ def main():
     files += [ROOT/'scripts/run_jevany_rl_gate.sh', SG/'src/stream_gemma/config.py',
               SG/'src/stream_gemma/v24_memory.py', ROOT/'src/pace_clm/rl_reference.py']
     freeze['judge'] = 'offline Qwen3.5-35B-A3B@59d61f3ce65a6d9863b86d2e96597125219dc754 base / jevany-offline-judge-v8-native-grouped-mm'
+    if a.reward_version != 'proxy-v1':
+        freeze['judge'] = 'gpt-4.1 / official cumulative-answer rubric / authorized gateway'
+        freeze['reward_contract'] = contract()
+        files += [ROOT/'scripts/jevany_rl_reward.py', ROOT/'scripts/audit_jevany_rl_reward.py',
+                  a.reward_audit/'reward-spec.json', a.reward_audit/'summary.json',
+                  SG/'zs_infer/pauc_f.py', SG/'zs_infer/scoring.py',
+                  SG/'third_party/proactive-videoqa/pauc/judge_llm_scores_openai.py',
+                  ROOT/'scripts/judge_exp10_utility.py']
     freeze['hashes'] = {str(f.resolve()): digest(f) for f in files}
     freeze['versions'] = {name:importlib.metadata.version(name) for name in ('torch','transformers','peft')}
     version_code="import importlib.metadata as m,json; print(json.dumps({n:m.version(n) for n in ('torch','transformers','peft','triton')}))"
@@ -279,12 +295,16 @@ def main():
                 raise RuntimeError('generator broker/trajectory accounting mismatch')
             write_json(batch/'rollouts.json', traces)
             tick = time.monotonic()
-            requests_payload, indexes = judge_requests(traces)
-            parts = 8-a.learners
-            for part in range(parts):
-                requests.put(('judge', part, requests_payload[part::parts], str(batch)))
-            judged = receive('judge', parts)
-            judge = apply_scores(traces, indexes, [r for value in judged.values() for r in value['results']])
+            if a.reward_version == 'proxy-v1':
+                requests_payload, indexes = judge_requests(traces)
+                parts = 8-a.learners
+                for part in range(parts):
+                    requests.put(('judge', part, requests_payload[part::parts], str(batch)))
+                judged = receive('judge', parts)
+                judge = apply_scores(traces, indexes, [r for value in judged.values() for r in value['results']])
+            else:
+                from jevany_rl_reward import score_traces
+                judge = score_traces(traces, batch/'reward', a.reward_audit/'gpt-cache.sqlite')
             judge['seconds'] = time.monotonic()-tick
             judge_ended_epoch = time.time()
             for group in range(a.starts):
@@ -294,6 +314,9 @@ def main():
                     for step in t['steps']:
                         step['advantage'] = advantage
             write_json(batch/'scored.json', traces)
+            if a.reward_version != 'proxy-v1' and not any(
+                    s['action'] == 2 for t in traces if t['spec']['gold_points'] for s in t['steps']):
+                raise RuntimeError('near-silence: zero fires across all event-containing training trajectories')
             per_rank = [[s for t in traces if t['trajectory_id']%a.learners == rank for s in t['steps']]
                         for rank in range(a.learners)]
             if a.tune_replay and version == 0:
@@ -333,6 +356,7 @@ def main():
             if broker_after['pending_contexts']:
                 raise RuntimeError('generator contexts still pending after a complete update')
             report = {'step': version+1, 'collection_round': version+1, 'optimizer_steps': version+1,
+                      'reward_version': a.reward_version,
                       'generator_broker':broker_stats, 'started_epoch': started_epoch, 'ended_epoch': time.time(),
                       'collection_ended_epoch': collection_ended_epoch,
                       'judge_ended_epoch': judge_ended_epoch, 'learner_ended_epoch': learner_ended_epoch,

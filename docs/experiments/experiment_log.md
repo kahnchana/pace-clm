@@ -198,3 +198,9 @@
 - See the [full RL E1 report](jevany_2b_rl_e1_results.md) for objective formulas,
   diagnostics, runtime scope, limitations, proposed comparisons and artifact
   links. No follow-up run is launched by documenting these results.
+
+### 2026-11-09: Reward-aligned RLOO completed
+
+- Reward-aligned RLOO stopped at round 16 for useful-response coverage below
+  90% of SFT at consecutive checks. Full 500-video GPT-4.1 WEB: 54.5561
+  PAUC-F, 605 useful / 187 wasted versus retained SFT 54.6651, 701 / 290.
