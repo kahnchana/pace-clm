@@ -223,7 +223,7 @@
   evaluation remains raw learned argmax with zero response margin. Active
   artifacts: `outputs/jevany-2b-rl/rloo-sft-anchor-v1/`.
 
-### 2026-11-10: E3 completed
+### 2026-11-10: E3 completed; episode-level follow-up planned
 
 - E3 completed all 32 rounds / 32 optimizer steps at 03:43:29 UTC. All four
   500-video WEB evaluations and GPT judgments finished. PAUC-F at rounds
@@ -233,3 +233,7 @@
   95% interval [-0.6665, +0.9796]; no conclusive gain is established. Round 32
   regressed to 628 useful / 212 wasted. Training finished its preset budget;
   no automatic extension launched. See the [completed E3 record](jevany_2b_rl_e3_anchor.md).
+- The [episode-level PAUC-F plan](../plans/jevany_2b_episode_level_rloo.md)
+  proposes complete causal video-request episodes with continuous generated
+  history, unchanged raw-argmax inference, and a bounded decision-matched pilot
+  on the original eight GPUs. Implementation and training have not launched.

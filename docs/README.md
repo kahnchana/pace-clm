@@ -52,6 +52,10 @@ because its paired confidence interval includes zero. The
 [RL implementation plan](plans/jevany_2b_rl_eight_h200_plan.md) retains the
 profiling and execution history.
 
+The proposed [episode-level RLOO plan](plans/jevany_2b_episode_level_rloo.md)
+tests continuous self-generated history and episode PAUC-F rewards on the same
+eight GPUs. It is a plan, not a launched experiment.
+
 Put stable implementation contracts in `reference/`, proposed work in
 `plans/`, and observed results in `experiments/`. Record a document's date and
 status within the document.
