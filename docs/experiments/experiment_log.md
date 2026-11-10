@@ -170,3 +170,31 @@
   `jevany-watch` session can restart resumable evaluation if its worker exits
   before `outputs/jevany/reports/full-results.json` is written. Numerical
   benchmark results remain pending.
+
+## 2026-11-07 — First 2B RL pilot and both judged WEB checks complete
+
+- Continued strong 2B J1-S SFT step 8,243 with decoder LoRA plus pointer-head
+  RL; base, vision, SFT reference and promoted answer generator stayed frozen.
+  The actual optimizer was whole-trajectory **RLOO-style policy gradient**,
+  not standard clipped GRPO. Training used a local semantic/event-ledger proxy,
+  not PAUC-F or GPT rewards.
+- Completed 32 total optimizer updates: 1,024 distinct 32-decision spans from
+  911 videos, four rollouts/start, 4,096 trajectories and 131,072 decisions.
+  This consumed 25% of the prepared span pool. The corrected step-1 gate was
+  included in the 32-update budget.
+- The continuation and both evaluations used only eight H200s on
+  `ip-10-3-120-167`, allocation 38177 / step 38177.1. Steps 2–32 took 5.44h of
+  complete-update time; the November 7 workflow, including preflight and two
+  WEB evaluations, finished at 23:12:05 UTC after about 6h52m.
+- Full 500-video WEB, GPT-4.1 `pauc-f-v1`, omega 0.5: step 16 scored **53.31**
+  PAUC-F and step 32 **53.09**, versus SFT **54.67**. Final useful/wasted fires
+  were **544/163**, versus **701/290** for SFT. Precision improved but useful
+  coverage fell; neither RL checkpoint improved the headline metric.
+- All updates recorded zero rollout/replay log-probability error; final
+  seven-learner restore passed at step 32 / sampler cursor 1,024. Analysis
+  recorded November 8 separates reward alignment, exploration, optimizer
+  choice and additional training exposure as follow-up questions, not proven
+  explanations or completed experiments.
+- See the [full RL E1 report](jevany_2b_rl_e1_results.md) for objective formulas,
+  diagnostics, runtime scope, limitations, proposed comparisons and artifact
+  links. No follow-up run is launched by documenting these results.

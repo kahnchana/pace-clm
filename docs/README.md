@@ -33,6 +33,15 @@ The [2B J1-S WEB result](experiments/qwen35_2b_j1s_web.md) and
 recent controller work. The older frozen-head study is indexed in
 [agent notes](../agent_notes/overview.md).
 
+The [completed first 2B RL pilot](experiments/jevany_2b_rl_e1_results.md)
+records the 32-update RLOO-style run, its 1,024-span / 131,072-decision exposure,
+hardware measurements, and full GPT-scored WEB results at steps 16 and 32.
+PAUC-F was 53.31 and 53.09 versus SFT at 54.67: fewer wasted responses came
+with lower useful coverage. The report distinguishes the implemented proxy
+reward from PAUC-F and RLOO from standard GRPO.
+The [RL implementation plan](plans/jevany_2b_rl_eight_h200_plan.md) retains the
+profiling and execution history.
+
 Put stable implementation contracts in `reference/`, proposed work in
 `plans/`, and observed results in `experiments/`. Record a document's date and
 status within the document.
