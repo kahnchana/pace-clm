@@ -38,12 +38,16 @@ records the 32-update RLOO-style run, its 1,024-span / 131,072-decision exposure
 hardware measurements, and full GPT-scored WEB results at steps 16 and 32.
 PAUC-F was 53.31 and 53.09 versus SFT at 54.67: fewer wasted responses came
 with lower useful coverage. The report distinguishes the implemented proxy
-reward from PAUC-F and RLOO from standard GRPO.
-The [RL implementation plan](plans/jevany_2b_rl_eight_h200_plan.md) retains the
+reward from PAUC-F and RLOO from standard GRPO. Subsequent reward-aligned
+RLOO and fixed GRPO pilots both stopped at round 16 for lost useful coverage;
+their full-WEB scores were 54.5561 and 53.7149. The
+[completed supervised-anchor RLOO pilot](experiments/jevany_2b_rl_e3_anchor.md)
+used a small training-only CE term and raw learned inference. All four full-WEB
+evaluations finished: round 24 scored 54.8260 with 701 useful / 280 wasted
+responses; round 32 regressed to 54.3782. The best point gain is not conclusive
+because its paired confidence interval includes zero. The
+[RL implementation plan](plans/jevany_2b_rl_eight_h200_plan.md) retains the
 profiling and execution history.
-
-Reward-aligned RLOO and fixed GRPO both stopped at round 16 for lost useful
-coverage; their full-WEB PAUC-F scores were 54.5561 and 53.7149 respectively.
 
 Put stable implementation contracts in `reference/`, proposed work in
 `plans/`, and observed results in `experiments/`. Record a document's date and

@@ -211,3 +211,25 @@
   pairs differing in useful-response count, useful actions inheriting negative
   trajectory advantages, and about 20–22% of events missed by all four rollouts.
   Score-function diagnostics do not establish parameter-gradient causality.
+- User authorized the [E3 supervised-anchor RLOO pilot](jevany_2b_rl_e3_anchor.md),
+  launched at 19:56:55 UTC on the original eight H200s, node
+  `ip-10-3-120-167`, allocation 38177. Fresh SFT, unchanged RLOO/reward settings,
+  plus 126 class-balanced original training examples per round and a coefficient
+  calibrated once to a 15% initial gradient-norm ratio. All 41 focused CPU tests
+  passed. The first update and seven-learner restore gate passed at 20:17:57 UTC;
+  training resumed toward round 8. These checks do not imply quality improved.
+- Full 500-video WEB/GPT evaluation is scheduled at rounds 8/16/24/32 with
+  coverage stops. The user explicitly prohibits runtime behavioral heuristics:
+  evaluation remains raw learned argmax with zero response margin. Active
+  artifacts: `outputs/jevany-2b-rl/rloo-sft-anchor-v1/`.
+
+### 2026-11-10: E3 completed
+
+- E3 completed all 32 rounds / 32 optimizer steps at 03:43:29 UTC. All four
+  500-video WEB evaluations and GPT judgments finished. PAUC-F at rounds
+  8/16/24/32: 52.9117 / 54.2602 / 54.8260 / 54.3782, versus SFT 54.6651.
+- The best observed checkpoint, round 24, retained all 701 useful responses
+  with 280 wasted versus SFT's 290. Its +0.1608 PAUC-F point gain has paired
+  95% interval [-0.6665, +0.9796]; no conclusive gain is established. Round 32
+  regressed to 628 useful / 212 wasted. Training finished its preset budget;
+  no automatic extension launched. See the [completed E3 record](jevany_2b_rl_e3_anchor.md).
