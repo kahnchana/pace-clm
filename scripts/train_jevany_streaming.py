@@ -61,6 +61,8 @@ class EpisodeFrames:
         self.defer_vision = defer_vision
         self.episode_id = None
         self.frames = OrderedDict()
+        self.frame_requests = 0
+        self.frame_cache_hits = 0
 
     def prepare(self, row: dict, timings: dict[str, float] | None = None,
                 prefetched: dict | None = None, *, cpu_only: bool = False):
@@ -75,6 +77,8 @@ class EpisodeFrames:
         indices = [int(turn["frame_index"]) for turn in row["turns"]]
         keys = [(row["video_path"], index) if self.cache_frames else index for index in indices]
         missing = [index for index, key in zip(indices, keys) if key not in self.frames]
+        self.frame_requests += len(indices)
+        self.frame_cache_hits += len(indices) - len(missing)
         if missing:
             start = time.perf_counter()
             path = row["video_path"]
@@ -143,10 +147,11 @@ def sync_gradients(parameters: list[torch.nn.Parameter], world: int):
 
 def save_checkpoint(out: Path, runtime, head, optimizer, *, step: int, seen: int,
                     rank: int, world: int, mode: str, seed: int, model_name: str,
-                    model_revision: str):
+                    model_revision: str, extra_state: dict | None = None):
     target = out / f"step-{step:06d}"
     target.mkdir(parents=True, exist_ok=True)
-    torch.save({"torch": torch.get_rng_state(), "cuda": torch.cuda.get_rng_state()},
+    torch.save({"torch": torch.get_rng_state(), "cuda": torch.cuda.get_rng_state(),
+                "python": random.getstate()},
                target / f"rng.rank{rank}.pt")
     if world > 1:
         dist.barrier()
@@ -157,12 +162,14 @@ def save_checkpoint(out: Path, runtime, head, optimizer, *, step: int, seen: int
         torch.save({"optimizer": optimizer.state_dict(), "step": step,
                     "seen_per_rank": seen, "world": world, "mode": mode,
                     "seed": seed, "model_name": model_name,
-                    "model_revision": model_revision}, target / "training_state.pt")
+                    "model_revision": model_revision, **(extra_state or {})}, target / "training_state.pt")
         (target / "model_identity.json").write_text(json.dumps({
             "model_name": model_name, "model_revision": model_revision,
             "controller_adapter": "controller_adapter", "pointer_head": "pointer_head.pt",
         }, indent=2) + "\n")
-        (out / "latest.json").write_text(json.dumps({"step": step, "checkpoint": str(target)}) + "\n")
+        temporary = out / "latest.json.tmp"
+        temporary.write_text(json.dumps({"step": step, "checkpoint": str(target)}) + "\n")
+        temporary.replace(out / "latest.json")
     if world > 1:
         dist.barrier()
 
