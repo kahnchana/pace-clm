@@ -13,6 +13,17 @@ improve training throughput:
 See the [full-data optimization report](../experiments/qwen35_2b_full_data_gpu_optimization.md)
 for the implementation, capacity checks, throughput measurements, and live-run
 status. The earlier [resource profile](../experiments/qwen35_2b_j1s_resource_profile.md)
-records the initial bottleneck and batch-size experiments. The full epoch and
-judged quality evaluation are still pending; the measured settings are specific
-to the tested node.
+records the initial bottleneck and batch-size experiments. That full-data run
+was stopped before completing an epoch; its
+[checkpoint quality results](../experiments/qwen35_2b_full_data_findings.md)
+are recorded separately. The measured settings are specific to the tested node.
+
+The later [completed mixture experiment](../experiments/qwen35_2b_mixture_12h_results.md)
+retained these mechanisms but fixed the effective global batch at 128 rather
+than using the earlier large adaptive batches. Its control used two physical
+chunks of eight per GPU and measured 30.88–42.26% mean sampled utilization
+across production phases, with substantial unused memory. These results do
+not reproduce the earlier large-batch benchmark's utilization. Increasing a
+physical chunk while retaining batch 128 is a distinct throughput test;
+filling memory by increasing effective batch would change the experiment's
+optimization contract.

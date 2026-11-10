@@ -13,6 +13,20 @@ The [GPU optimizations](reference/gpu_optimizations.md) page summarizes the
 Qwen3.5-2B training changes and links to their experiment reports.
 The [consolidated 2B full-data findings](experiments/qwen35_2b_full_data_findings.md)
 cover the GPU measurements, stopped training run, and WEB checkpoint results.
+The [completed two-node mixture experiment](experiments/qwen35_2b_mixture_12h_results.md)
+records both arms' configuration, all eight judged WEB evaluations, exposure,
+runtime measurements, checkpoint fluctuations, uncertainty and next-step
+recommendations. The final PAUC-F scores are 48.70 for the existing-order
+control and 47.61 for representative ordering; unequal actual budgets and
+runtime differences prevent a clean causal A/B comparison.
+The [original execution plan](plans/qwen35_2b_12h_mixture_experiments.md)
+proposed 12 training hours per arm. The user amended execution to frozen,
+preflight-estimated step counts: actual training took 13.533 hours for the
+[control](experiments/qwen35_2b_control_12h.md) and 8.914 hours for the
+[representative arm](experiments/qwen35_2b_representative_12h.md).
+The [earlier mixture proposal](plans/qwen35_2b_data_mixture_plan.md) and
+controlled scaling plan remain design history and proposed follow-ups, not
+evidence that larger-scale training has passed a quality gate.
 
 The [2B J1-S WEB result](experiments/qwen35_2b_j1s_web.md) and
 [Qwen3.5 size sweep](experiments/qwen35_dense_size_sweep_j1s_web.md) cover the

@@ -7,6 +7,12 @@ GPUs. The earlier matched 2B run is a historical comparator measured on its
 original node. No completed full-data epoch or final-epoch quality result
 exists.
 
+Completed follow-up (2026-11-06): the fresh, fixed-batch-128 existing-order and
+representative-mixture runs and all eight scheduled WEB evaluations are in the
+[mixture results report](qwen35_2b_mixture_12h_results.md). They are separate
+experiments with unequal actual budgets; this historical step-505 run remains
+stopped and was not resumed by that work.
+
 ## What we learned
 
 1. Larger, context-dependent batches filled GPU memory and improved a

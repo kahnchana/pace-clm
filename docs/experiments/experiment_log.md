@@ -1,5 +1,31 @@
 # Experiment log
 
+## 2026-11-06 — Qwen3.5-2B mixture runs and all WEB evaluations complete
+
+- Completed existing-order control A and representative-mixture B from
+  byte-identical fresh seed-42 LoRA/head states on the same audited eligible
+  pool. Fixed global batch was 128 in both arms; ordering preserved original
+  row contents and multiplicities. All eight full 500-video WEB evaluations
+  passed prediction, judging and protocol integrity checks.
+- The user replaced enforced training-time stopping with preflight-estimated,
+  frozen step budgets. A completed 3,608 updates / 461,824 presentations in
+  13.533 training hours; B completed 1,776 / 227,328 in 8.914 hours. Different
+  backends, physical chunks, actual durations and exposures prevent a clean
+  equal-time or equal-dose A/B conclusion.
+- A's scheduled PAUC-F scores were 45.44 / 49.47 / 43.20 / 48.70; B's were
+  40.49 / 47.74 / 51.73 / 47.61. Intermediate maxima are diagnostic, not
+  substituted final endpoints. Video-bootstrap intervals confirm substantial
+  within-run drops but do not measure seed or judge variability.
+- Documented control GPU underutilization, conservative physical chunks,
+  checkpoint restoration versus numerical reproducibility, startup recoveries,
+  exposure skew and the distinction between per-frame CE and closed-loop
+  judged quality. Recommend bounded diagnosis before scaling unchanged;
+  no continuation, new objective or new training was launched.
+- The requested completion notification was delivered into the original chat.
+  See the [completed report and artifact map](qwen35_2b_mixture_12h_results.md),
+  [A record](qwen35_2b_control_12h.md) and
+  [B record](qwen35_2b_representative_12h.md).
+
 ## 2026-11-04 — smaller Qwen3.5 J1-S controllers
 
 - Completed the official 2B controller's matched one-epoch, seed-42 run:
