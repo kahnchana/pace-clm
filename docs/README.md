@@ -13,6 +13,9 @@ The [GPU optimizations](reference/gpu_optimizations.md) page summarizes the
 Qwen3.5-2B training changes and links to their experiment reports.
 The [consolidated 2B full-data findings](experiments/qwen35_2b_full_data_findings.md)
 cover the GPU measurements, stopped training run, and WEB checkpoint results.
+The proposed [controlled 2B scaling plan](plans/qwen35_2b_controlled_scaling_plan.md)
+tests representative ordering, fixed global batches, and fresh data against
+matched replay before another full-manifest run.
 The [completed two-node mixture experiment](experiments/qwen35_2b_mixture_12h_results.md)
 records both arms' configuration, all eight judged WEB evaluations, exposure,
 runtime measurements, checkpoint fluctuations, uncertainty and next-step
