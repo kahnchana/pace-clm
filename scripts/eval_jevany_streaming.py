@@ -153,6 +153,8 @@ def main() -> None:
     parser.add_argument("--record-action-logits", action="store_true",
                         help="Store per-decision raw action logits in each rollout row")
     args = parser.parse_args()
+    from pace_clm.evaluation_policy import require_raw_action_scores
+    require_raw_action_scores(args.response_margin)
     if args.gemini_prompt_variant != "baseline" and args.answer_model != "gemini-3.8-flash":
         parser.error("Gemini prompt variants require --answer-model gemini-3.8-flash")
     if bool(args.validation_manifest) == bool(args.benchmark):
@@ -291,8 +293,11 @@ def main() -> None:
                                        train_decoder=False)
             if args.record_action_logits:
                 action_trace.append({"logits": [float(x) for x in logits.detach().cpu().tolist()],
-                                     "action": ACTIONS[int(logits.argmax().item())]})
-            logits[ACTIONS.index("Response")] -= args.response_margin
+                                     "action": ACTIONS[int(logits.argmax().item())],
+                                     "frame_index": len(action_trace),
+                                     "frame_time_text": messages[-1]['content'][0].get('text', ''),
+                                     "history_turns": sum(m['role'] == 'assistant' for m in messages),
+                                     "memory_question": messages[1]['content'][0].get('text', '')})
             action = ACTIONS[int(logits.argmax().item())]
         decision_seconds += time.monotonic() - started
         counts[action] += 1
