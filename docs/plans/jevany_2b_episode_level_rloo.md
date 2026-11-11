@@ -1,6 +1,6 @@
 # Episode-level PAUC-F with continuous self-generated history
 
-Date: 2026-11-10. Status: proposed implementation and bounded pilot; not launched.
+Date: 2026-11-10. Status: implementation and GPU update/restore gate passed; bounded pilot running.
 Hardware: only the eight H200s on `ip-10-3-120-167`, original allocation 38177
 while available. Do not allocate another node automatically.
 
@@ -146,4 +146,67 @@ All improvements must arise from training learned weights.
 Deliver the aggregation audit, frozen episode/data/reward specification, source
 snapshots, gate and resume results, exposure/cost curves, checkpoints, full WEB
 predictions/judgments, paired comparisons and a concise result report. This plan
-does not claim that the episode implementation exists or that training started.
+does not by itself establish that the correctness gates or pilot completed;
+consult the execution record and run artifacts below.
+
+## Execution record (2026-11-10)
+
+The user authorized implementation and the bounded pilot on the original node.
+The implementation now lives in `scripts/run_jevany_episode_workflow.py`, with
+episode collection/learning in `scripts/run_jevany_episode_rloo.py` and
+`scripts/jevany_rl_episode_workers.py`. Historical experiment sources are retained.
+The active run directory is `outputs/jevany-2b-rl/episode-rloo-v2`; its
+`workflow-status.json` is the current execution state, and its frozen manifests,
+source snapshots, logs and reports are the evidence for subsequent results.
+
+Preparation retained 8,321 video/request episodes (median 67 seconds, maximum
+179), with all 8,321 video contents hashed. It rejected 3,132 records whose
+complete event windows exceed the trusted annotated interval, excluded 445
+evaluation records, and rejected one captioned record without retained events.
+No genuinely event-free episodes remain, so the existing explicit no-event
+penalty is inactive. No physical video tail is assumed to be annotated silence.
+
+The frozen retry draw schedule has 29 complete-batch updates and 126,376
+sampled decisions, with WEB evaluations at 34,636 / 69,744 / 99,832 / 126,376.
+The first failed gate collected 4,224 decisions without committing an optimizer
+update. Those decisions count against the original cap: total planned
+collection across both attempts is 130,600, below 131,072. The retry starts
+fresh from SFT; rejected work is not counted as learned exposure.
+Supervised replay uses the original row order and coefficient
+0.0035140820988695176, with cumulative credits
+`floor(sampled_decisions * 126 / 4096)`. Policy-gradient and regularization sums
+use the global trajectory count times the constant 32 as their denominator;
+individual trajectories are never divided by their own lengths. This retains
+the prior constant loss scale while targeting expected episode return.
+
+The aggregation audit reproduced official global scores and preserved all
+physical fires and complete event windows. Global PAUC-F ranks anchored clip
+RLOO round 24 above SFT, whereas mean episode PAUC-F ranks SFT above it. Thus
+episode reward is explicitly not an exact substitute for global model selection.
+The 36 focused CPU tests passed. The corrected full-batch GPU gate committed
+one update on 4,224 decisions with 129 supervised replay examples, zero replay
+probability error, zero initial SFT KL, and a maximum learner reservation of
+46.64 GiB. All seven learners restored the checkpoint without another update.
+The measured batch took 1,470.48 seconds, suggesting approximately 12.2 core
+node-hours for the remaining frozen recipe's entire committed exposure, before
+evaluation and restart costs. This first-batch projection is not a completion
+time guarantee. Pilot quality results remain pending.
+
+The failed gate is retained in `outputs/jevany-2b-rl/episode-rloo-v1`. It stopped
+on a replay probability mismatch of 0.0309185, above the unchanged 0.005
+tolerance. A diagnostic reproduced the same discrepancy in evaluation and
+training modes. Replay now preserves complete collected batches, row positions
+and padding shapes, rather than regrouping observations. A no-update GPU proof
+on 70 saved observations, including gradient-enabled replay and early and late
+episode positions, measured zero probability error for the preserved layout.
+The repeated full rollout/update and restore gate passed, and the pilot has
+continued toward its first full-WEB milestone. Inference and raw learned action
+scores are unchanged.
+
+Postprocessing reports episode and benchmark-global scores separately, and
+compares both decision exposure and GPU cost. The matched-control workflow
+freezes all 32 available historical anchored checkpoints before new WEB results
+are available. It selects the nearest checkpoint by exposure or cost, reports
+signed differences, and evaluates missing historical controls after the pilot
+using only the same original eight-GPU allocation. It never selects references
+by their quality score or silently claims exact budget equality.
