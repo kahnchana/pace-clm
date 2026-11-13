@@ -1,18 +1,22 @@
 # Episode-balanced WEB/EGO RLOO: results and experiment record
 
-**PRELIMINARY — awaiting step 32 and final judging.** Updated 2026-11-13T14:38:43.204832+00:00.
+**Completed experiment.** Updated 2026-11-13T17:14:42.037884+00:00.
 
-PRELIMINARY: latest completed full evaluation is step 30.
+Completed step 32.
 
-Full WEB PAUC-F: 56.56 versus SFT 54.69 (+1.87 points).
+Full WEB PAUC-F: 56.60 versus SFT 54.69 (+1.92 points).
 
-Full EGO PAUC-F: 42.83 versus SFT 42.73 (+0.10 points).
+Full EGO PAUC-F: 42.31 versus SFT 42.73 (-0.42 points).
 
-WEB held out PAUC-F: 55.56 versus SFT 55.73 (-0.17 points).
+WEB held out PAUC-F: 55.88 versus SFT 55.73 (+0.15 points).
 
-EGO held out PAUC-F: 42.06 versus SFT 42.48 (-0.42 points).
+EGO held out PAUC-F: 41.48 versus SFT 42.48 (-1.01 points).
 
-Training/final judging are incomplete; this is not the final result.
+Combined WEB/EGO scores include training identities; heldout splits are the transfer check.
+
+WEB held out paired 95% interval [-1.65, +1.82] includes zero (conditional on saved judgments).
+
+EGO held out paired 95% interval [-2.47, +0.51] includes zero (conditional on saved judgments).
 
 ## What was tested
 
@@ -34,6 +38,7 @@ This is a practical sampling comparison, not an isolated causal estimate of epis
 | 16 | 56.46 | 42.65 | 55.74 | 42.16 | 67.76 |
 | 24 | 56.64 | 42.62 | 55.78 | 41.47 | 66.21 |
 | 30 | 56.56 | 42.83 | 55.56 | 42.06 | 66.85 |
+| 32 | 56.60 | 42.31 | 55.88 | 41.48 | 66.92 |
 
 Scores use official GPT-4.1 judged PAUC-F, omega 0.5, and raw learned argmax with response margin zero. Combined domain scores pool precision counts and gold-weighted recall before calculating PAUC-F; they are not averages of split PAUC-F values.
 
@@ -41,11 +46,11 @@ Scores use official GPT-4.1 judged PAUC-F, omega 0.5, and raw learned argmax wit
 
 | Cohort | PAUC-F | Change | Paired 95% interval | Useful: SFT → checkpoint | Wasted: SFT → checkpoint |
 |---|---|---|---|---|---|
-| Full WEB | 56.56 | +1.87 | [+0.92, +2.85] | 701 → 763 | 290 → 290 |
-| Full EGO | 42.83 | +0.10 | [-0.95, +1.15] | 479 → 475 | 473 → 458 |
-| WEB held out | 55.56 | -0.17 | [-1.84, +1.40] | 138 → 146 | 44 → 54 |
-| EGO held out | 42.06 | -0.42 | [-1.80, +0.98] | 280 → 274 | 295 → 293 |
-| Original validation | 66.85 | +2.95 | [+1.13, +4.91] | 293 → 309 | 196 → 173 |
+| Full WEB | 56.60 | +1.92 | [+0.97, +2.89] | 701 → 779 | 290 → 308 |
+| Full EGO | 42.31 | -0.42 | [-1.52, +0.64] | 479 → 479 | 473 → 485 |
+| WEB held out | 55.88 | +0.15 | [-1.65, +1.82] | 138 → 150 | 44 → 58 |
+| EGO held out | 41.48 | -1.01 | [-2.47, +0.51] | 280 → 275 | 295 → 313 |
+| Original validation | 66.92 | +3.02 | [+1.16, +5.04] | 293 → 313 | 196 → 176 |
 
 Intervals are paired episode bootstraps conditional on saved judgments and reused cohort selection. They do not capture judge uncertainty. Selecting the best observed checkpoint after evaluation is exploratory; every evaluated checkpoint is shown above.
 
@@ -55,9 +60,9 @@ Best observed combined WEB checkpoint: step 24; best observed combined EGO check
 
 | Source | Distinct episodes committed | RL decisions committed |
 |---|---|---|
-| ours | 120 | 38572 |
-| web | 60 | 4160 |
-| ego | 60 | 86636 |
+| ours | 128 | 41520 |
+| web | 64 | 4528 |
+| ego | 64 | 92412 |
 
 Allowed source pools are 8,321 original episodes, 400 WEB training videos and 145 EGO training videos. WEB heldout 100, EGO heldout 181 and original validation 128 are excluded from this RL run. Separate sampled/unsampled training-pool summaries are in the saved evaluation JSON. Those labels refer to the planned schedule; the committed exposure counts above are actual.
 
@@ -97,9 +102,9 @@ Each row below contains two different EGO episodes, four trajectories each. Best
 
 | Source | Episode groups | Mean episode PAUC-F | Mean best-of-four | Flat reward groups | Nonzero-advantage trajectories |
 |---|---|---|---|---|---|
-| ours | 120 | 57.37 | 69.38 | 15.0% | 85.8% |
-| web | 60 | 50.16 | 62.85 | 5.0% | 95.0% |
-| ego | 60 | 33.83 | 42.66 | 5.0% | 95.0% |
+| ours | 128 | 57.24 | 69.00 | 15.6% | 85.2% |
+| web | 64 | 49.56 | 61.72 | 4.7% | 95.3% |
+| ego | 64 | 33.22 | 42.40 | 4.7% | 95.3% |
 
 Reward flatness uses actual training rewards. For event-free episodes, PAUC-F is zero while the negative-fire reward can still vary; the CSV preserves both quantities.
 
@@ -135,20 +140,22 @@ Reward flatness uses actual training rewards. For event-free episodes, PAUC-F is
 | 28 | 45.05 | 31.75 | 38.40 | 33.79 |
 | 29 | 59.99 | 35.99 | 47.99 | 33.34 |
 | 30 | 40.24 | 61.67 | 50.96 | 45.59 |
+| 31 | 37.05 | 51.94 | 44.49 | 26.47 |
+| 32 | 30.17 | 34.60 | 32.39 | 21.53 |
 
 ## Runtime and correctness accounting
 
-Committed updates: 30. Successful-update time: 12.05 hours; successful-update eight-GPU cost: 96.38 GPU-hours. This excludes model loading, restore gates, idle evaluation backpressure, failed attempts and standalone evaluation; it is not total allocation cost.
+Committed updates: 32. Successful-update time: 12.89 hours; successful-update eight-GPU cost: 103.14 GPU-hours. This excludes model loading, restore gates, idle evaluation backpressure, failed attempts and standalone evaluation; it is not total allocation cost.
 
-Maximum recorded rollout/replay probability error across committed updates: 0. Final checkpoint file hashes will be verified on completion. Source manifests, schedule, runtime contract, freezes, replay repair and checkpoint commits are retained.
+Maximum recorded rollout/replay probability error across committed updates: 0. Final checkpoint file hashes verified. Source manifests, schedule, runtime contract, freezes, replay repair and checkpoint commits are retained.
 
 ## EGO response timing at the latest full checkpoint
 
 | Video seconds | Decisions | Fires | Useful | Wasted | Mean Response probability |
 |---|---|---|---|---|---|
-| 0–120 | 39120 | 391 | 193 | 198 | 4.77% |
-| 120–240 | 39120 | 291 | 162 | 129 | 3.92% |
-| 240–360+ | 39444 | 251 | 120 | 131 | 3.44% |
+| 0–120 | 39120 | 400 | 194 | 206 | 4.70% |
+| 120–240 | 39120 | 308 | 166 | 142 | 3.84% |
+| 240–360+ | 39444 | 256 | 119 | 137 | 3.36% |
 
 These are descriptive temporal buckets; event density and episode content differ across video time. They do not by themselves prove a causal time-dependent suppression effect.
 
@@ -170,8 +177,8 @@ This is a different training recipe and episode exposure, shown for context rath
 - [workflow-freeze.json](/fsx/home/kranasinghe/repo/pace-clm/outputs/jevany-2b-rl/mixed-web-ego-episode-balanced-v2-to32/workflow-freeze.json)
 - [runtime-contract.json](/fsx/home/kranasinghe/repo/pace-clm/outputs/jevany-2b-rl/mixed-web-ego-episode-balanced-v2-to32/runtime-contract.json)
 - [replay-bank-repair.json](/fsx/home/kranasinghe/repo/pace-clm/outputs/jevany-2b-rl/mixed-web-ego-episode-balanced-v2-to32/replay-bank-repair.json)
-- [commit.json](/fsx/home/kranasinghe/repo/pace-clm/outputs/jevany-2b-rl/mixed-web-ego-episode-balanced-v2-to32/step-000030/commit.json)
-- [result.json](/fsx/home/kranasinghe/repo/pace-clm/outputs/jevany-2b-rl/mixed-web-ego-episode-balanced-v2-to32/evaluation/final-step30/result.json)
+- [commit.json](/fsx/home/kranasinghe/repo/pace-clm/outputs/jevany-2b-rl/mixed-web-ego-episode-balanced-v2-to32/step-000032/commit.json)
+- [result.json](/fsx/home/kranasinghe/repo/pace-clm/outputs/jevany-2b-rl/mixed-web-ego-episode-balanced-v2-to32/evaluation/full-step32/result.json)
 - [full-results.csv](/fsx/home/kranasinghe/repo/pace-clm/outputs/jevany-2b-rl/mixed-web-ego-episode-balanced-v2-to32/final-documentation/full-results.csv)
 - [training-episode-rollouts.csv](/fsx/home/kranasinghe/repo/pace-clm/outputs/jevany-2b-rl/mixed-web-ego-episode-balanced-v2-to32/final-documentation/training-episode-rollouts.csv)
 - [summary.txt](/fsx/home/kranasinghe/repo/pace-clm/outputs/jevany-2b-rl/mixed-web-ego-episode-balanced-v2-to32/final-documentation/summary.txt)

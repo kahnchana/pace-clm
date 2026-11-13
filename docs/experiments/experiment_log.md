@@ -323,3 +323,11 @@
   final step 32. Completed full step-30 PAUC-F is 56.560 WEB / 42.826 EGO,
   including training identities; heldout WEB/EGO are 55.561 / 42.063. No final
   step-32 result is available at this recovery launch.
+
+<!-- jevany-episode-balanced-v2-to32-complete -->
+### 2026-11-13 — Episode-balanced mixed RLOO step 32 complete
+
+- Completed 32 updates / 138460 RL decisions after the user-authorized coverage-stop override and replay-bank repair.
+- Final full WEB/EGO PAUC-F: 56.6040 / 42.3052; heldout WEB/EGO: 55.8751 / 41.4761. Combined scores include training identities.
+- All queued evaluations and final judging completed; checkpoint 32 hashes verified. Training remained on allocation 38177 and evaluation on 38226, with raw learned argmax / margin zero.
+- See [the final experiment record](jevany_2b_episode_balanced_mixed_results.md) for the full recipe, every full result, paired comparisons, trajectory diagnostics, operational failures/fixes and artifact provenance.
