@@ -237,3 +237,89 @@
   proposes complete causal video-request episodes with continuous generated
   history, unchanged raw-argmax inference, and a bounded decision-matched pilot
   on the original eight GPUs. Implementation and training have not launched.
+
+### 2026-11-12: episode-balanced mixed WEB/EGO pilot launched
+
+- User authorized the [episode-balanced mixed pilot](../plans/jevany_2b_episode_balanced_mixed_rloo.md).
+  Fresh J1-S SFT step 8243, unchanged reward/optimizer/replay/prompt contracts,
+  with exactly four original, two WEB and two EGO episodes per update and four
+  complete trajectories per episode. Frozen seed-42 schedule: 23 updates,
+  98,836 decisions, 92 original / 46 WEB / 46 EGO distinct episodes.
+- All 58 focused CPU checks passed. Both assigned eight-H200 allocations were
+  running and idle before launch. Training workflow started at 15:05 UTC on
+  `ip-10-3-120-167`, seven learners and one generator; asynchronous eight-worker
+  evaluation started on `ip-10-3-70-177`. Initial steps were stopped before any
+  training update to correct one-CPU task affinity. At 15:08 UTC both restarted
+  with `--cpu-bind=none` and 96 available CPUs, in steps 38177.37 / 38226.25.
+  No new allocation was requested. Run artifacts are under
+  `outputs/jevany-2b-rl/mixed-web-ego-episode-balanced-v2/`.
+- First-update restore, replay and independent evaluation gates must pass before
+  automatic continuation. Full evaluations are queued for steps 6/12/18/23;
+  all inference uses raw learned argmax and zero response margin. Reports include
+  combined WEB/EGO, heldout and sampled/unsampled splits, and EGO temporal
+  diagnostics. Previous mixed-v1 step 16 is also queued for its missing evaluation.
+- Previous mixed-v1 failed waiting for learners on a 10,284-decision final batch;
+  no saved stacks establish its root cause. New batches are bounded at 5,248
+  decisions, with rank progress and timeout stack capture. Failure handling now
+  queues the latest committed checkpoint for full evaluation. Launch does not
+  establish correctness-gate success or improved quality; results remain pending.
+
+### 2026-11-12: first-gate runtime mismatch identified and corrected
+
+- Episode-balanced v2 saved step 1; training-node replay and seven-learner
+  restore passed. Independent evaluation-node replay stopped the workflow at
+  15:41 UTC. Model weights, decoded pixels and token inputs matched, while
+  frozen vision embeddings differed. The evaluation process inherited host
+  CUDA libraries and loaded cuDNN 9.7.1 versus training's 9.1.
+- Removing the inherited `LD_LIBRARY_PATH` override made the original probe
+  reproduce all seven saved batches exactly, without changed tolerances or
+  modified action scores. A diagnostic using training vision embeddings also
+  recovered exact decoder scores, locating the difference in vision encoding.
+- At 16:50 UTC, both existing node workflows restarted with an explicit
+  PyTorch/CUDA/cuDNN startup assertion and clean library path. Source freezes,
+  schedule, learned checkpoint, optimizer and RNG state remain unchanged.
+  Affected v2 first-gate/baseline outputs are preserved in the run's runtime
+  audit directory and regenerated; continuation from step 1 remains gated on
+  those records. No model-quality improvement is claimed from this repair.
+
+### 2026-11-13: user overrides coverage stop and extends through step 32
+
+- Episode-balanced v2 stopped at step 15 / 63,216 decisions after EGO-heldout
+  useful responses fell below 90% of SFT at full steps 6 and 12. The user then
+  explicitly authorized continuation through step 32 regardless of coverage.
+- Prepared `outputs/jevany-2b-rl/mixed-web-ego-episode-balanced-v2-to32/`, retaining
+  the original stop record and frozen artifacts. The extension preserves the
+  entire original schedule prefix and adds updates 24–32: 32 total updates,
+  138,460 decisions, 128 original / 64 WEB / 64 EGO episodes. It resumes the
+  exact step-15 model, optimizer, RNG and sampler state; 17 updates remain.
+- Coverage/silence quality results now produce warnings rather than stop
+  requests. Training objective, optimizer recipe and raw-argmax inference are
+  unchanged. Run-local code snapshots preserve the original run's source hashes.
+  Two targeted tests, code compilation and exact prepared/generated resume
+  contract equivalence passed. At about 03:34 UTC the training workflow began
+  seven-learner restore verification on allocation 38177; the evaluation
+  supervisor waits for the existing reference job on allocation 38226 before
+  taking the same eight evaluation GPUs. No new allocation was requested.
+- Full continuation evaluations are scheduled at steps 16/24/32 and subsets at
+  20/28. Retain evaluation backpressure and complete final judging; no new quality
+  result is implied by launching the continuation.
+
+### 2026-11-13: continuation reaches step 30; replay-bank capacity repaired
+
+- The continuation committed step 30 / 129,368 decisions, with zero recorded
+  rollout/replay probability error on completed updates. Update 31 failed at
+  12:31 UTC because its supervised replay slice exceeded the original 4,032-row
+  bank; the 32-update extension requires 4,259 credits. No step-31 optimizer
+  checkpoint was committed. This was a replay-capacity omission, not the
+  overridden coverage rule.
+- The repaired training-only replay manifest retains the original prefix and
+  appends the first 227 frozen examples in order. Replay coefficient, episode
+  schedule, learned step-30 checkpoint and all selections through step 30 remain
+  unchanged. Prior freezes/source and the failed uncommitted batch are archived
+  in the continuation's replay-bank repair audit directory. Three targeted tests
+  and exact trainer-contract reconstruction passed.
+- At about 14:24 UTC the same node workflows restarted for exact step-30 restore
+  and the final two updates. Evaluation remains on allocation 38226 and awaits
+  final step 32. Completed full step-30 PAUC-F is 56.560 WEB / 42.826 EGO,
+  including training identities; heldout WEB/EGO are 55.561 / 42.063. No final
+  step-32 result is available at this recovery launch.
