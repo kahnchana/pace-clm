@@ -297,6 +297,8 @@ def main() -> None:
                                      "frame_index": len(action_trace),
                                      "frame_time_text": messages[-1]['content'][0].get('text', ''),
                                      "history_turns": sum(m['role'] == 'assistant' for m in messages),
+                                     "input_tokens": int(inputs['input_ids'].shape[1]),
+                                     "input_frames": len(vision),
                                      "memory_question": messages[1]['content'][0].get('text', '')})
             action = ACTIONS[int(logits.argmax().item())]
         decision_seconds += time.monotonic() - started
